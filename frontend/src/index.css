@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply transition-colors duration-300;
+  }
+}
+
+.dark {
+  color-scheme: dark;
+}

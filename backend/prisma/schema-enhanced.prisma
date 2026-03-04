@@ -1,0 +1,193 @@
+// Enhanced Security Schema - Replace your existing schema.prisma with this
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============= USER MODELS WITH SECURITY ENHANCEMENTS =============
+
+model Admin {
+  id                Int            @id @default(autoincrement())
+  email             String         @unique
+  password          String         // bcrypt hashed with 12 rounds
+  name              String
+  isActive          Boolean        @default(true)
+  failedLoginCount  Int            @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  passwordChangedAt DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+}
+
+model Cashier {
+  id                Int            @id @default(autoincrement())
+  username          String         @unique
+  password          String         // bcrypt hashed with 12 rounds
+  name              String
+  isActive          Boolean        @default(true)
+  failedLoginCount  Int            @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  passwordChangedAt DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  orders            Order[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+}
+
+model Kitchen {
+  id                Int            @id @default(autoincrement())
+  username          String         @unique
+  password          String         // bcrypt hashed with 12 rounds
+  name              String
+  isActive          Boolean        @default(true)
+  failedLoginCount  Int            @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  passwordChangedAt DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+}
+
+// ============= SECURITY MODELS =============
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  userType  String   // 'admin', 'cashier', 'kitchen'
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  @@index([token])
+  @@index([userId, userType])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  userType   String   // 'admin', 'cashier', 'kitchen'
+  action     String   // 'LOGIN', 'LOGOUT', 'CREATE', 'UPDATE', 'DELETE', 'FAILED_LOGIN', 'UNAUTHORIZED_ACCESS'
+  resource   String?  // 'Product', 'Order', 'Category', etc.
+  resourceId Int?
+  details    String?  // JSON string with additional details
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, userType])
+  @@index([action])
+  @@index([createdAt])
+  @@index([resource])
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  userType  String   // 'admin', 'cashier', 'kitchen'
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// ============= BUSINESS MODELS =============
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  nameOr    String?   // Afaan Oromo
+  nameAm    String?   // Amharic
+  nameSo    String?   // Somali
+  nameAr    String?   // Arabic
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id             Int         @id @default(autoincrement())
+  name           String
+  nameOr         String?     // Afaan Oromo
+  nameAm         String?     // Amharic
+  nameSo         String?     // Somali
+  nameAr         String?     // Arabic
+  description    String?
+  descriptionOr  String?     // Afaan Oromo
+  descriptionAm  String?     // Amharic
+  descriptionSo  String?     // Somali
+  descriptionAr  String?     // Arabic
+  price          Float
+  image          String?
+  categoryId     Int
+  category       Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems     OrderItem[]
+  showInMenu     Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model QRCode {
+  id          Int      @id @default(autoincrement())
+  name        String
+  url         String
+  qrCodeData  String   @db.Text
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  tableNumber String
+  status      String      @default("pending") // pending, preparing, ready, completed, cancelled
+  cashierId   Int
+  cashier     Cashier     @relation(fields: [cashierId], references: [id])
+  items       OrderItem[]
+  total       Float
+  notes       String?
+  priority    String      @default("normal") // low, normal, high
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  acceptedAt  DateTime?
+  completedAt DateTime?
+
+  @@index([status])
+  @@index([cashierId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
