@@ -38,3 +38,71 @@ export const updateAdminCredentials = async (req, res) => {
     res.status(500).json({ error: 'Failed to update admin credentials' });
   }
 };
+
+// Get Restaurant Settings
+export const getRestaurantSettings = async (req, res) => {
+  try {
+    let settings = await prisma.restaurantSettings.findFirst();
+    
+    // Create default settings if none exist
+    if (!settings) {
+      settings = await prisma.restaurantSettings.create({
+        data: {
+          name: 'My Restaurant',
+          subname: 'Delicious Food & Great Service',
+          primaryColor: '#d97706'
+        }
+      });
+    }
+
+    res.json(settings);
+  } catch (error) {
+    console.error('Get settings error:', error);
+    res.status(500).json({ error: 'Failed to fetch restaurant settings' });
+  }
+};
+
+// Update Restaurant Settings
+export const updateRestaurantSettings = async (req, res) => {
+  try {
+    const { name, subname, logo, primaryColor } = req.body;
+
+    // Validate input
+    if (!name) {
+      return res.status(400).json({ error: 'Restaurant name is required' });
+    }
+
+    // Get or create settings
+    let settings = await prisma.restaurantSettings.findFirst();
+    
+    const updateData = {
+      name,
+      subname: subname || null,
+      primaryColor: primaryColor || '#d97706'
+    };
+
+    // Only update logo if provided
+    if (logo !== undefined) {
+      updateData.logo = logo;
+    }
+
+    if (settings) {
+      settings = await prisma.restaurantSettings.update({
+        where: { id: settings.id },
+        data: updateData
+      });
+    } else {
+      settings = await prisma.restaurantSettings.create({
+        data: updateData
+      });
+    }
+
+    res.json({ 
+      message: 'Restaurant settings updated successfully', 
+      settings 
+    });
+  } catch (error) {
+    console.error('Update settings error:', error);
+    res.status(500).json({ error: 'Failed to update restaurant settings' });
+  }
+};

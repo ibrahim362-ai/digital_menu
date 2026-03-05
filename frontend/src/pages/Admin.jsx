@@ -28,6 +28,7 @@ export default function Admin() {
   
   // Settings state
   const [adminForm, setAdminForm] = useState({ email: '', password: '', name: '' });
+  const [restaurantForm, setRestaurantForm] = useState({ name: '', subname: '', logo: '', primaryColor: '#d97706' });
   const [showPassword, setShowPassword] = useState({});
   const [copiedField, setCopiedField] = useState(null);
   
@@ -78,6 +79,8 @@ export default function Admin() {
           password: '' 
         });
       }
+      // Fetch restaurant settings
+      fetchRestaurantSettings();
     }
   }, [activeTab, admin]);
 
@@ -320,6 +323,63 @@ export default function Admin() {
       setTimeout(() => setCopiedField(null), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+    }
+  };
+
+  const fetchRestaurantSettings = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/settings/restaurant`);
+      setRestaurantForm({
+        name: data.name || '',
+        subname: data.subname || '',
+        logo: data.logo || '',
+        primaryColor: data.primaryColor || '#d97706'
+      });
+    } catch (err) {
+      console.error('Failed to fetch restaurant settings', err);
+    }
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const { data } = await axios.post(`${API_URL}/upload`, formData, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' }
+      });
+      setRestaurantForm({ ...restaurantForm, logo: data.url });
+    } catch (err) { 
+      console.error('Failed to upload logo'); 
+      alert('Failed to upload logo'); 
+    }
+  };
+
+  const handleUpdateRestaurant = async (e) => {
+    e.preventDefault();
+    
+    if (!restaurantForm.name) {
+      alert('Restaurant name is required');
+      return;
+    }
+
+    try {
+      const response = await axios.put(`${API_URL}/settings/restaurant`, restaurantForm, axiosConfig);
+      alert('Restaurant settings updated successfully');
+      
+      if (response.data.settings) {
+        setRestaurantForm({
+          name: response.data.settings.name,
+          subname: response.data.settings.subname || '',
+          logo: response.data.settings.logo || '',
+          primaryColor: response.data.settings.primaryColor || '#d97706'
+        });
+      }
+    } catch (err) { 
+      console.error('Update restaurant error:', err);
+      const errorMessage = err.response?.data?.error || 'Failed to update restaurant settings';
+      alert(errorMessage);
     }
   };
 
@@ -878,6 +938,145 @@ export default function Admin() {
                 <h2 className="text-3xl font-bold text-gray-900">System Settings</h2>
                 <p className="text-gray-600 mt-1">Manage user accounts and platform configuration</p>
               </div>
+
+              {/* Restaurant Settings */}
+              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-amber-100 p-3 rounded-xl">
+                    <Settings className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Restaurant Settings</h3>
+                    <p className="text-sm text-gray-600">Customize your restaurant branding</p>
+                  </div>
+                </div>
+                
+                <form onSubmit={handleUpdateRestaurant} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Restaurant Name *</label>
+                      <input 
+                        type="text" 
+                        placeholder="My Restaurant" 
+                        value={restaurantForm.name} 
+                        onChange={(e) => setRestaurantForm({ ...restaurantForm, name: e.target.value })} 
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all" 
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Subname / Tagline</label>
+                      <input 
+                        type="text" 
+                        placeholder="Delicious Food & Great Service" 
+                        value={restaurantForm.subname} 
+                        onChange={(e) => setRestaurantForm({ ...restaurantForm, subname: e.target.value })} 
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all" 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5" />
+                      Restaurant Logo
+                    </label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleLogoUpload} 
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" 
+                    />
+                    {restaurantForm.logo && (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-4 flex items-center gap-4">
+                        <img 
+                          src={`${BASE_URL}${restaurantForm.logo}`} 
+                          alt="Restaurant Logo" 
+                          className="h-24 w-24 object-contain rounded-xl shadow-lg border-2 border-amber-200 bg-white p-2" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setRestaurantForm({ ...restaurantForm, logo: '' })}
+                          className="text-red-600 hover:text-red-700 text-sm font-medium"
+                        >
+                          Remove Logo
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color Theme</label>
+                    <div className="flex items-center gap-4">
+                      <input 
+                        type="color" 
+                        value={restaurantForm.primaryColor} 
+                        onChange={(e) => setRestaurantForm({ ...restaurantForm, primaryColor: e.target.value })} 
+                        className="h-12 w-24 rounded-lg border border-gray-300 cursor-pointer" 
+                      />
+                      <input 
+                        type="text" 
+                        value={restaurantForm.primaryColor} 
+                        onChange={(e) => setRestaurantForm({ ...restaurantForm, primaryColor: e.target.value })} 
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all font-mono" 
+                        placeholder="#d97706"
+                      />
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      {['#d97706', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'].map(color => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => setRestaurantForm({ ...restaurantForm, primaryColor: color })}
+                          className="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-all"
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-amber-100 p-2 rounded-lg mt-0.5">
+                        <Settings className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-amber-900 mb-1">Preview</h4>
+                        <div className="bg-white rounded-lg p-4 border border-amber-200">
+                          <div className="flex items-center gap-3">
+                            {restaurantForm.logo && (
+                              <img 
+                                src={`${BASE_URL}${restaurantForm.logo}`} 
+                                alt="Logo Preview" 
+                                className="h-12 w-12 object-contain" 
+                              />
+                            )}
+                            <div>
+                              <h3 className="font-bold text-lg" style={{ color: restaurantForm.primaryColor }}>
+                                {restaurantForm.name || 'My Restaurant'}
+                              </h3>
+                              {restaurantForm.subname && (
+                                <p className="text-sm text-gray-600">{restaurantForm.subname}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }} 
+                    type="submit" 
+                    className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 flex items-center gap-2 shadow-md transition-all font-medium"
+                  >
+                    <Save className="w-5 h-5" />
+                    Update Restaurant Settings
+                  </motion.button>
+                </form>
+              </motion.div>
 
               {/* Admin Settings */}
               <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">

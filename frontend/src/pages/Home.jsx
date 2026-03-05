@@ -119,6 +119,12 @@ export default function Home() {
   });
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [restaurantSettings, setRestaurantSettings] = useState({
+    name: 'Digital Menu',
+    subname: 'Browse our delicious offerings',
+    logo: null,
+    primaryColor: '#d97706'
+  });
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
@@ -135,7 +141,22 @@ export default function Home() {
 
   useEffect(() => {
     fetchMenuProducts();
+    fetchRestaurantSettings();
   }, []);
+
+  const fetchRestaurantSettings = async () => {
+    try {
+      const { data } = await axios.get('http://localhost:3001/api/settings/restaurant');
+      setRestaurantSettings({
+        name: data.name || 'Digital Menu',
+        subname: data.subname || 'Browse our delicious offerings',
+        logo: data.logo || null,
+        primaryColor: data.primaryColor || '#d97706'
+      });
+    } catch (err) {
+      console.error('Failed to fetch restaurant settings');
+    }
+  };
 
   const fetchMenuProducts = async () => {
     try {
@@ -194,16 +215,36 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-4"
             >
-              <div className={`${darkMode ? 'bg-amber-600' : 'bg-gradient-to-r from-amber-600 to-orange-600'} p-3 rounded-xl shadow-lg`}>
-                <ChefHat className="w-8 h-8 text-white" />
+              <div 
+                className={`${darkMode ? 'bg-opacity-80' : 'bg-gradient-to-r'} p-3 rounded-xl shadow-lg`}
+                style={{ 
+                  backgroundColor: darkMode ? restaurantSettings.primaryColor : undefined,
+                  backgroundImage: darkMode ? undefined : `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`
+                }}
+              >
+                {restaurantSettings.logo ? (
+                  <img 
+                    src={`http://localhost:3001${restaurantSettings.logo}`} 
+                    alt="Restaurant Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
+                ) : (
+                  <ChefHat className="w-8 h-8 text-white" />
+                )}
               </div>
               <div>
-                <h1 className={`text-3xl font-bold ${darkMode ? 'text-amber-400' : 'bg-gradient-to-r from-amber-700 to-orange-700 bg-clip-text text-transparent'}`}>
-                  {t.title}
+                <h1 
+                  className={`text-3xl font-bold ${darkMode ? '' : 'bg-gradient-to-r bg-clip-text text-transparent'}`}
+                  style={{ 
+                    color: darkMode ? restaurantSettings.primaryColor : undefined,
+                    backgroundImage: darkMode ? undefined : `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}cc)`
+                  }}
+                >
+                  {restaurantSettings.name}
                 </h1>
                 <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-amber-700'} flex items-center gap-2`}>
                   <Sparkles className="w-4 h-4" />
-                  {t.subtitle}
+                  {restaurantSettings.subname}
                 </p>
               </div>
             </motion.div>
@@ -214,7 +255,11 @@ export default function Home() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowLangMenu(!showLangMenu)}
-                  className={`p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-amber-100 hover:bg-amber-200 text-amber-800'} shadow-md hover:shadow-lg`}
+                  className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg`}
+                  style={{
+                    backgroundColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}20`,
+                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor
+                  }}
                 >
                   <Globe className="w-5 h-5" />
                 </motion.button>
@@ -254,7 +299,11 @@ export default function Home() {
                 whileHover={{ scale: 1.05, rotate: 180 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' : 'bg-amber-100 hover:bg-amber-200 text-amber-800'} shadow-md hover:shadow-lg`}
+                className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg`}
+                style={{
+                  backgroundColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}20`,
+                  color: darkMode ? '#fbbf24' : restaurantSettings.primaryColor
+                }}
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </motion.button>
@@ -320,13 +369,18 @@ export default function Home() {
                 onClick={() => setSelectedCategory('all')}
                 className={`px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 ${
                   selectedCategory === 'all'
-                    ? darkMode 
-                      ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-amber-500/50' 
-                      : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-amber-300'
+                    ? 'text-white'
                     : darkMode
                       ? 'bg-gray-800 text-gray-200 hover:bg-gray-700 border-2 border-gray-700'
-                      : 'bg-white text-amber-800 hover:bg-amber-50 border-2 border-amber-200'
+                      : 'bg-white hover:bg-amber-50 border-2'
                 }`}
+                style={selectedCategory === 'all' ? {
+                  background: `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
+                  boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`
+                } : {
+                  borderColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}30`,
+                  color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor
+                }}
               >
                 <Filter className="w-5 h-5" />
                 {t.allItems}
@@ -339,13 +393,18 @@ export default function Home() {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`px-8 py-4 rounded-xl font-bold transition-all shadow-lg ${
                     selectedCategory === category.id
-                      ? darkMode 
-                        ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-amber-500/50' 
-                        : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-amber-300'
+                      ? 'text-white'
                       : darkMode
                         ? 'bg-gray-800 text-gray-200 hover:bg-gray-700 border-2 border-gray-700'
-                        : 'bg-white text-amber-800 hover:bg-amber-50 border-2 border-amber-200'
+                        : 'bg-white hover:bg-amber-50 border-2'
                   }`}
+                  style={selectedCategory === category.id ? {
+                    background: `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
+                    boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`
+                  } : {
+                    borderColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}30`,
+                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor
+                  }}
                 >
                   {getLocalizedText(category, 'name')}
                 </motion.button>
@@ -379,7 +438,10 @@ export default function Home() {
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                        <div className="absolute top-4 right-4 bg-amber-600 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2">
+                        <div 
+                          className="absolute top-4 right-4 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2"
+                          style={{ backgroundColor: restaurantSettings.primaryColor }}
+                        >
                           <Star className="w-4 h-4 fill-current" />
                           {t.popular}
                         </div>
@@ -410,9 +472,14 @@ export default function Home() {
                         </motion.span>
                       </div>
                       
-                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold mb-4 ${
-                        darkMode ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30' : 'bg-amber-100 text-amber-800 border border-amber-200'
-                      }`}>
+                      <span 
+                        className={`inline-block px-4 py-2 rounded-full text-sm font-bold mb-4 border`}
+                        style={{
+                          backgroundColor: darkMode ? `${restaurantSettings.primaryColor}20` : `${restaurantSettings.primaryColor}15`,
+                          color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor,
+                          borderColor: darkMode ? `${restaurantSettings.primaryColor}30` : `${restaurantSettings.primaryColor}30`
+                        }}
+                      >
                         {getLocalizedText(product.category, 'name')}
                       </span>
                       
@@ -454,8 +521,11 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              <h3 className={`text-2xl font-bold ${darkMode ? 'text-amber-400' : 'text-amber-700'}`}>
-                Al-Khwarizmi
+              <h3 
+                className={`text-2xl font-bold`}
+                style={{ color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor }}
+              >
+                {restaurantSettings.name}
               </h3>
             </motion.div>
 
@@ -466,7 +536,12 @@ export default function Home() {
               transition={{ delay: 0.7 }}
               className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
             >
-              {t.builtBy} <span className={`font-semibold ${darkMode ? 'text-amber-400' : 'text-amber-700'}`}>Al-Khwarizmi</span>
+              {t.builtBy} <span 
+                className={`font-semibold`}
+                style={{ color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor }}
+              >
+                Al-Khwarizmi
+              </span>
             </motion.p>
 
             {/* Version */}
