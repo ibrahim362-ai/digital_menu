@@ -144,9 +144,11 @@ export default function Home() {
     fetchRestaurantSettings();
   }, []);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
   const fetchRestaurantSettings = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3001/api/settings/restaurant');
+      const { data } = await axios.get(`${API_URL}/settings/restaurant`);
       setRestaurantSettings({
         name: data.name || 'Digital Menu',
         subname: data.subname || 'Browse our delicious offerings',
@@ -160,7 +162,7 @@ export default function Home() {
 
   const fetchMenuProducts = async () => {
     try {
-      const { data } = await axios.get('http://localhost:3001/api/products/menu');
+      const { data } = await axios.get(`${API_URL}/products/menu`);
       setMenuProducts(data);
       
       const uniqueCategories = [...new Set(data.map(p => p.category))];
@@ -224,7 +226,7 @@ export default function Home() {
               >
                 {restaurantSettings.logo ? (
                   <img 
-                    src={`http://localhost:3001${restaurantSettings.logo}`} 
+                    src={`${API_URL.replace('/api', '')}${restaurantSettings.logo}`} 
                     alt="Restaurant Logo" 
                     className="w-8 h-8 object-contain"
                   />
@@ -433,7 +435,7 @@ export default function Home() {
                         <motion.img 
                           whileHover={{ scale: 1.1 }}
                           transition={{ duration: 0.3 }}
-                          src={`http://localhost:3001${product.image}`} 
+                          src={`${API_URL.replace('/api', '')}${product.image}`} 
                           alt={getLocalizedText(product, 'name')}
                           className="w-full h-full object-cover"
                         />
