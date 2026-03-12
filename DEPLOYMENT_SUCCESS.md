@@ -36,11 +36,11 @@
 - **Customer Menu:** https://simoo.skoolific.com
 - **Admin Panel:** https://simoo.skoolific.com/admin/login
 
-### 🔑 Default Admin Credentials
+### 🔑 Admin Login Credentials
 
 ```
-Email: admin@example.com
-Password: admin123
+Email: ibrahimkamil362@gmail.com
+Password: Admin@123
 ```
 
 ⚠️ **IMPORTANT:** Change these credentials immediately after first login!
