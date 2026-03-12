@@ -84,6 +84,21 @@ export default function Admin() {
     }
   }, [activeTab, admin]);
 
+  // Update document title and favicon when restaurant settings change
+  useEffect(() => {
+    if (restaurantForm.name) {
+      document.title = `${restaurantForm.name} - Admin`;
+    }
+    
+    if (restaurantForm.logo) {
+      const favicon = document.querySelector("link[rel*='icon']") || document.createElement('link');
+      favicon.type = 'image/x-icon';
+      favicon.rel = 'icon';
+      favicon.href = `${BASE_URL}${restaurantForm.logo}`;
+      document.getElementsByTagName('head')[0].appendChild(favicon);
+    }
+  }, [restaurantForm.name, restaurantForm.logo]);
+
   // API base URL from environment
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
   const BASE_URL = API_URL.replace('/api', ''); // For static assets like images
@@ -492,10 +507,20 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-4">
             <div className="bg-amber-600 p-3 rounded-xl shadow-lg">
-              <LayoutDashboard className="w-7 h-7 text-white" />
+              {restaurantForm.logo ? (
+                <img 
+                  src={`${BASE_URL}${restaurantForm.logo}`} 
+                  alt="Restaurant Logo" 
+                  className="w-7 h-7 object-contain"
+                />
+              ) : (
+                <LayoutDashboard className="w-7 h-7 text-white" />
+              )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-amber-50">Admin Dashboard</h1>
+              <h1 className="text-2xl font-bold text-amber-50">
+                {restaurantForm.name || 'Restaurant'} - Admin
+              </h1>
               <p className="text-amber-200 text-sm">Manage your restaurant</p>
             </div>
           </motion.div>
