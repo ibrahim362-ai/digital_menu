@@ -147,11 +147,13 @@ model PasswordResetToken {
 }
 
 model RestaurantSettings {
-  id          Int      @id @default(autoincrement())
-  name        String   @default("My Restaurant")
-  subname     String?
-  logo        String?
-  primaryColor String  @default("#d97706") // amber-600
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  name         String   @default("My Restaurant")
+  subname      String?
+  logo         String?
+  favicon      String?
+  browserTitle String   @default("Restaurant Management")
+  primaryColor String   @default("#d97706") // amber-600
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

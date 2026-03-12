@@ -7,8 +7,10 @@ import {
   Image as ImageIcon, ChevronRight, TrendingUp, ShoppingBag, Download, Globe, Settings, Users, ChefHat, CreditCard, Shield, Copy, Check
 } from 'lucide-react';
 import { getCurrentUser } from '../utils/auth';
+import { useBranding } from '../context/BrandingContext';
 
 export default function Admin() {
+  const { branding, updateBranding, BASE_URL, fetchBranding } = useBranding();
   const [admin, setAdmin] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [categories, setCategories] = useState([]);
@@ -28,7 +30,14 @@ export default function Admin() {
   
   // Settings state
   const [adminForm, setAdminForm] = useState({ email: '', password: '', name: '' });
-  const [restaurantForm, setRestaurantForm] = useState({ name: '', subname: '', logo: '', primaryColor: '#d97706' });
+  const [restaurantForm, setRestaurantForm] = useState({ 
+    name: '', 
+    subname: '', 
+    logo: '', 
+    favicon: '',
+    browserTitle: '',
+    primaryColor: '#d97706' 
+  });
   const [showPassword, setShowPassword] = useState({});
   const [copiedField, setCopiedField] = useState(null);
   
@@ -84,24 +93,15 @@ export default function Admin() {
     }
   }, [activeTab, admin]);
 
-  // Update document title and favicon when restaurant settings change
+  // Update document title when restaurant settings change
   useEffect(() => {
-    if (restaurantForm.name) {
-      document.title = `${restaurantForm.name} - Admin`;
+    if (restaurantForm.browserTitle) {
+      document.title = `${restaurantForm.browserTitle} - Admin`;
     }
-    
-    if (restaurantForm.logo) {
-      const favicon = document.querySelector("link[rel*='icon']") || document.createElement('link');
-      favicon.type = 'image/x-icon';
-      favicon.rel = 'icon';
-      favicon.href = `${BASE_URL}${restaurantForm.logo}`;
-      document.getElementsByTagName('head')[0].appendChild(favicon);
-    }
-  }, [restaurantForm.name, restaurantForm.logo]);
+  }, [restaurantForm.browserTitle]);
 
   // API base URL from environment
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-  const BASE_URL = API_URL.replace('/api', ''); // For static assets like images
   
   // Axios config with credentials
   const axiosConfig = { withCredentials: true };
@@ -423,6 +423,8 @@ export default function Admin() {
         name: data.name || '',
         subname: data.subname || '',
         logo: data.logo || '',
+        favicon: data.favicon || '',
+        browserTitle: data.browserTitle || 'Restaurant Management',
         primaryColor: data.primaryColor || '#d97706'
       });
     } catch (err) {
@@ -446,6 +448,22 @@ export default function Admin() {
     }
   };
 
+  const handleFaviconUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const { data } = await axios.post(`${API_URL}/upload`, formData, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' }
+      });
+      setRestaurantForm({ ...restaurantForm, favicon: data.url });
+    } catch (err) { 
+      console.error('Failed to upload favicon'); 
+      alert('Failed to upload favicon'); 
+    }
+  };
+
   const handleUpdateRestaurant = async (e) => {
     e.preventDefault();
     
@@ -454,17 +472,28 @@ export default function Admin() {
       return;
     }
 
+    if (!restaurantForm.browserTitle) {
+      alert('Browser title is required');
+      return;
+    }
+
     try {
       const response = await axios.put(`${API_URL}/settings/restaurant`, restaurantForm, axiosConfig);
       alert('Restaurant settings updated successfully');
       
       if (response.data.settings) {
-        setRestaurantForm({
+        const updatedSettings = {
           name: response.data.settings.name,
           subname: response.data.settings.subname || '',
           logo: response.data.settings.logo || '',
+          favicon: response.data.settings.favicon || '',
+          browserTitle: response.data.settings.browserTitle || 'Restaurant Management',
           primaryColor: response.data.settings.primaryColor || '#d97706'
-        });
+        };
+        setRestaurantForm(updatedSettings);
+        
+        // Update global branding context
+        updateBranding(updatedSettings);
       }
     } catch (err) { 
       console.error('Update restaurant error:', err);
@@ -507,9 +536,9 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-4">
             <div className="bg-amber-600 p-3 rounded-xl shadow-lg">
-              {restaurantForm.logo ? (
+              {branding.logo ? (
                 <img 
-                  src={`${BASE_URL}${restaurantForm.logo}`} 
+                  src={`${BASE_URL}${branding.logo}`} 
                   alt="Restaurant Logo" 
                   className="w-7 h-7 object-contain"
                 />
@@ -519,7 +548,7 @@ export default function Admin() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-amber-50">
-                {restaurantForm.name || 'Restaurant'} - Admin
+                {branding.name || 'Restaurant'} - Admin
               </h1>
               <p className="text-amber-200 text-sm">Manage your restaurant</p>
             </div>
@@ -1281,9 +1310,52 @@ export default function Admin() {
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Browser Tab Title *</label>
+                    <input 
+                      type="text" 
+                      placeholder="Restaurant Management" 
+                      value={restaurantForm.browserTitle} 
+                      onChange={(e) => setRestaurantForm({ ...restaurantForm, browserTitle: e.target.value })} 
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all" 
+                      required 
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This will appear in the browser tab</p>
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                       <ImageIcon className="w-5 h-5" />
-                      Restaurant Logo
+                      Favicon (Browser Tab Icon)
+                    </label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleFaviconUpload} 
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" 
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Recommended: 32x32px or 64x64px square image</p>
+                    {restaurantForm.favicon && (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-4 flex items-center gap-4">
+                        <img 
+                          src={`${BASE_URL}${restaurantForm.favicon}`} 
+                          alt="Favicon" 
+                          className="h-16 w-16 object-contain rounded-xl shadow-lg border-2 border-amber-200 bg-white p-2" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setRestaurantForm({ ...restaurantForm, favicon: '' })}
+                          className="text-red-600 hover:text-red-700 text-sm font-medium"
+                        >
+                          Remove Favicon
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5" />
+                      Restaurant Logo (Navigation/Menu)
                     </label>
                     <input 
                       type="file" 
@@ -1291,6 +1363,7 @@ export default function Admin() {
                       onChange={handleLogoUpload} 
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" 
                     />
+                    <p className="text-xs text-gray-500 mt-1">This logo will appear in the navigation bar and customer menu</p>
                     {restaurantForm.logo && (
                       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-4 flex items-center gap-4">
                         <img 
@@ -1347,7 +1420,7 @@ export default function Admin() {
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-semibold text-amber-900 mb-1">Preview</h4>
-                        <div className="bg-white rounded-lg p-4 border border-amber-200">
+                        <div className="bg-white rounded-lg p-4 border border-amber-200 space-y-3">
                           <div className="flex items-center gap-3">
                             {restaurantForm.logo && (
                               <img 
@@ -1363,6 +1436,18 @@ export default function Admin() {
                               {restaurantForm.subname && (
                                 <p className="text-sm text-gray-600">{restaurantForm.subname}</p>
                               )}
+                            </div>
+                          </div>
+                          <div className="border-t pt-3">
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              {restaurantForm.favicon && (
+                                <img 
+                                  src={`${BASE_URL}${restaurantForm.favicon}`} 
+                                  alt="Favicon Preview" 
+                                  className="h-4 w-4 object-contain" 
+                                />
+                              )}
+                              <span className="font-medium">{restaurantForm.browserTitle || 'Restaurant Management'}</span>
                             </div>
                           </div>
                         </div>

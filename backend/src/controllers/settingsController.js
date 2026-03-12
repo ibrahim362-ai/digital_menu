@@ -65,7 +65,7 @@ export const getRestaurantSettings = async (req, res) => {
 // Update Restaurant Settings
 export const updateRestaurantSettings = async (req, res) => {
   try {
-    const { name, subname, logo, primaryColor } = req.body;
+    const { name, subname, logo, favicon, browserTitle, primaryColor } = req.body;
 
     // Validate input
     if (!name) {
@@ -78,12 +78,18 @@ export const updateRestaurantSettings = async (req, res) => {
     const updateData = {
       name,
       subname: subname || null,
+      browserTitle: browserTitle || 'Restaurant Management',
       primaryColor: primaryColor || '#d97706'
     };
 
     // Only update logo if provided
     if (logo !== undefined) {
       updateData.logo = logo;
+    }
+
+    // Only update favicon if provided
+    if (favicon !== undefined) {
+      updateData.favicon = favicon;
     }
 
     if (settings) {

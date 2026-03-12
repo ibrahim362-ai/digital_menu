@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Menu
 } from 'lucide-react';
+import { useBranding } from '../context/BrandingContext';
 
 const translations = {
   en: {
@@ -111,6 +112,7 @@ const translations = {
 };
 
 export default function Home() {
+  const { branding, BASE_URL } = useBranding();
   const [menuProducts, setMenuProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -126,12 +128,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [restaurantSettings, setRestaurantSettings] = useState({
-    name: 'Digital Menu',
-    subname: 'Browse our delicious offerings',
-    logo: null,
-    primaryColor: '#d97706'
-  });
   const [dragX, setDragX] = useState(0);
   const [showMobileNav, setShowMobileNav] = useState(false);
 
@@ -150,28 +146,11 @@ export default function Home() {
 
   useEffect(() => {
     fetchMenuProducts();
-    fetchRestaurantSettings();
   }, []);
 
-  // Update document title and favicon when restaurant settings change
+  // Update CSS variables when branding changes
   useEffect(() => {
-    if (restaurantSettings.name) {
-      document.title = restaurantSettings.name;
-    }
-    
-    if (restaurantSettings.logo) {
-      // Update favicon to use restaurant logo
-      const favicon = document.querySelector("link[rel*='icon']") || document.createElement('link');
-      favicon.type = 'image/x-icon';
-      favicon.rel = 'icon';
-      favicon.href = `${API_URL.replace('/api', '')}${restaurantSettings.logo}`;
-      document.getElementsByTagName('head')[0].appendChild(favicon);
-    }
-  }, [restaurantSettings.name, restaurantSettings.logo]);
-
-  // Update CSS variables when restaurant settings change
-  useEffect(() => {
-    if (restaurantSettings.primaryColor) {
+    if (branding.primaryColor) {
       // Convert hex to RGB for CSS variables
       const hexToRgb = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -182,9 +161,9 @@ export default function Home() {
         } : null;
       };
 
-      const rgb = hexToRgb(restaurantSettings.primaryColor);
+      const rgb = hexToRgb(branding.primaryColor);
       if (rgb) {
-        document.documentElement.style.setProperty('--color-primary', restaurantSettings.primaryColor);
+        document.documentElement.style.setProperty('--color-primary', branding.primaryColor);
         document.documentElement.style.setProperty('--color-primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
         
         // Calculate lighter and darker variants
@@ -195,23 +174,9 @@ export default function Home() {
         document.documentElement.style.setProperty('--color-primary-dark', darkerColor);
       }
     }
-  }, [restaurantSettings.primaryColor]);
+  }, [branding.primaryColor]);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
-  const fetchRestaurantSettings = async () => {
-    try {
-      const { data } = await axios.get(`${API_URL}/settings/restaurant`);
-      setRestaurantSettings({
-        name: data.name || 'Digital Menu',
-        subname: data.subname || 'Browse our delicious offerings',
-        logo: data.logo || null,
-        primaryColor: data.primaryColor || '#d97706'
-      });
-    } catch (err) {
-      console.error('Failed to fetch restaurant settings');
-    }
-  };
 
   const fetchMenuProducts = async () => {
     try {
@@ -335,13 +300,13 @@ export default function Home() {
               <div 
                 className={`${darkMode ? 'bg-opacity-80' : 'bg-gradient-to-r'} p-3 rounded-xl shadow-lg`}
                 style={{ 
-                  backgroundColor: darkMode ? restaurantSettings.primaryColor : undefined,
-                  backgroundImage: darkMode ? undefined : `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`
+                  backgroundColor: darkMode ? branding.primaryColor : undefined,
+                  backgroundImage: darkMode ? undefined : `linear-gradient(to right, ${branding.primaryColor}, ${branding.primaryColor}dd)`
                 }}
               >
-                {restaurantSettings.logo ? (
+                {branding.logo ? (
                   <img 
-                    src={`${API_URL.replace('/api', '')}${restaurantSettings.logo}`} 
+                    src={`${BASE_URL}${branding.logo}`} 
                     alt="Restaurant Logo" 
                     className="w-8 h-8 object-contain"
                   />
@@ -353,15 +318,15 @@ export default function Home() {
                 <h1 
                   className={`text-3xl font-bold ${darkMode ? '' : 'bg-gradient-to-r bg-clip-text text-transparent'}`}
                   style={{ 
-                    color: darkMode ? restaurantSettings.primaryColor : undefined,
-                    backgroundImage: darkMode ? undefined : `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}cc)`
+                    color: darkMode ? branding.primaryColor : undefined,
+                    backgroundImage: darkMode ? undefined : `linear-gradient(to right, ${branding.primaryColor}, ${branding.primaryColor}cc)`
                   }}
                 >
-                  {restaurantSettings.name}
+                  {branding.name}
                 </h1>
                 <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-amber-700'} flex items-center gap-2`}>
                   <Sparkles className="w-4 h-4" />
-                  {restaurantSettings.subname}
+                  {branding.subname}
                 </p>
               </div>
             </motion.div>
@@ -389,8 +354,8 @@ export default function Home() {
                   onClick={() => setShowLangMenu(!showLangMenu)}
                   className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg touch-target haptic-press`}
                   style={{
-                    backgroundColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}20`,
-                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor,
+                    backgroundColor: darkMode ? '#374151' : `${branding.primaryColor}20`,
+                    color: darkMode ? '#e5e7eb' : branding.primaryColor,
                     minWidth: '44px',
                     minHeight: '44px'
                   }}
@@ -491,8 +456,8 @@ export default function Home() {
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg touch-target haptic-press`}
                 style={{
-                  backgroundColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}20`,
-                  color: darkMode ? '#fbbf24' : restaurantSettings.primaryColor,
+                  backgroundColor: darkMode ? '#374151' : `${branding.primaryColor}20`,
+                  color: darkMode ? '#fbbf24' : branding.primaryColor,
                   minWidth: '44px',
                   minHeight: '44px'
                 }}
@@ -621,12 +586,12 @@ export default function Home() {
                       : 'bg-white hover:bg-amber-50 border-2'
                 }`}
                 style={selectedCategory === 'all' ? {
-                  background: `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
-                  boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`,
+                  background: `linear-gradient(to right, ${branding.primaryColor}, ${branding.primaryColor}dd)`,
+                  boxShadow: darkMode ? `0 10px 25px ${branding.primaryColor}50` : `0 10px 25px ${branding.primaryColor}30`,
                   minHeight: '48px'
                 } : {
-                  borderColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}30`,
-                  color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor,
+                  borderColor: darkMode ? '#374151' : `${branding.primaryColor}30`,
+                  color: darkMode ? '#e5e7eb' : branding.primaryColor,
                   minHeight: '48px'
                 }}
               >
@@ -667,12 +632,12 @@ export default function Home() {
                         : 'bg-white hover:bg-amber-50 border-2'
                   }`}
                   style={selectedCategory === category.id ? {
-                    background: `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
-                    boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`,
+                    background: `linear-gradient(to right, ${branding.primaryColor}, ${branding.primaryColor}dd)`,
+                    boxShadow: darkMode ? `0 10px 25px ${branding.primaryColor}50` : `0 10px 25px ${branding.primaryColor}30`,
                     minHeight: '48px'
                   } : {
-                    borderColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}30`,
-                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor,
+                    borderColor: darkMode ? '#374151' : `${branding.primaryColor}30`,
+                    color: darkMode ? '#e5e7eb' : branding.primaryColor,
                     minHeight: '48px'
                   }}
                 >
@@ -773,7 +738,7 @@ export default function Home() {
                             }}
                             className="absolute top-2 right-2 text-white px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1"
                             style={{ 
-                              backgroundColor: `${restaurantSettings.primaryColor}dd`,
+                              backgroundColor: `${branding.primaryColor}dd`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
                             }}
                           >
@@ -834,7 +799,7 @@ export default function Home() {
                           }}
                           className="text-lg md:text-xl font-extrabold flex items-center gap-1"
                           style={{ 
-                            background: `linear-gradient(135deg, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
+                            background: `linear-gradient(135deg, ${branding.primaryColor}, ${branding.primaryColor}dd)`,
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text'
@@ -870,9 +835,9 @@ export default function Home() {
                         }}
                         className={`inline-block px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm`}
                         style={{
-                          backgroundColor: darkMode ? `${restaurantSettings.primaryColor}25` : `${restaurantSettings.primaryColor}20`,
-                          color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor,
-                          border: `1px solid ${restaurantSettings.primaryColor}40`
+                          backgroundColor: darkMode ? `${branding.primaryColor}25` : `${branding.primaryColor}20`,
+                          color: darkMode ? branding.primaryColor : branding.primaryColor,
+                          border: `1px solid ${branding.primaryColor}40`
                         }}
                       >
                         {getLocalizedText(product.category, 'name')}
@@ -1106,7 +1071,7 @@ export default function Home() {
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.3, type: "spring" }}
                             className="absolute top-6 right-6 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 backdrop-blur-sm"
-                            style={{ backgroundColor: `${restaurantSettings.primaryColor}dd` }}
+                            style={{ backgroundColor: `${branding.primaryColor}dd` }}
                           >
                             <Star className="w-4 h-4 fill-current" />
                             <span className="text-sm">{t.featured}</span>
@@ -1143,8 +1108,8 @@ export default function Home() {
                         <span 
                           className="inline-block px-4 py-2 rounded-full text-sm font-bold"
                           style={{
-                            backgroundColor: `${restaurantSettings.primaryColor}20`,
-                            color: restaurantSettings.primaryColor
+                            backgroundColor: `${branding.primaryColor}20`,
+                            color: branding.primaryColor
                           }}
                         >
                           {getLocalizedText(selectedProduct.category, 'name')}
@@ -1207,9 +1172,9 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <div 
                             className="p-2 rounded-lg"
-                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                            style={{ backgroundColor: `${branding.primaryColor}20` }}
                           >
-                            <ShoppingBag className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                            <ShoppingBag className="w-5 h-5" style={{ color: branding.primaryColor }} />
                           </div>
                           <div>
                             <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Category</p>
@@ -1224,9 +1189,9 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <div 
                             className="p-2 rounded-lg"
-                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                            style={{ backgroundColor: `${branding.primaryColor}20` }}
                           >
-                            <Clock className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                            <Clock className="w-5 h-5" style={{ color: branding.primaryColor }} />
                           </div>
                           <div>
                             <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Prep Time</p>
@@ -1241,9 +1206,9 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <div 
                             className="p-2 rounded-lg"
-                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                            style={{ backgroundColor: `${branding.primaryColor}20` }}
                           >
-                            <TrendingUp className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                            <TrendingUp className="w-5 h-5" style={{ color: branding.primaryColor }} />
                           </div>
                           <div>
                             <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Status</p>
@@ -1258,9 +1223,9 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <div 
                             className="p-2 rounded-lg"
-                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                            style={{ backgroundColor: `${branding.primaryColor}20` }}
                           >
-                            <Users className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                            <Users className="w-5 h-5" style={{ color: branding.primaryColor }} />
                           </div>
                           <div>
                             <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Serves</p>
@@ -1364,7 +1329,7 @@ export default function Home() {
                 animate={{
                   scale: selectedCategory === 'all' ? 1.1 : 1,
                   color: selectedCategory === 'all' 
-                    ? restaurantSettings.primaryColor 
+                    ? branding.primaryColor 
                     : (darkMode ? '#9ca3af' : '#6b7280')
                 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
@@ -1375,7 +1340,7 @@ export default function Home() {
                 className={`text-xs font-semibold`}
                 animate={{
                   color: selectedCategory === 'all' 
-                    ? restaurantSettings.primaryColor 
+                    ? branding.primaryColor 
                     : (darkMode ? '#9ca3af' : '#6b7280')
                 }}
               >
@@ -1385,7 +1350,7 @@ export default function Home() {
                 <motion.div
                   layoutId="mobile-nav-indicator"
                   className="absolute -top-1 w-12 h-1 rounded-full"
-                  style={{ backgroundColor: restaurantSettings.primaryColor }}
+                  style={{ backgroundColor: branding.primaryColor }}
                 />
               )}
             </motion.button>
@@ -1402,7 +1367,7 @@ export default function Home() {
                   animate={{
                     scale: selectedCategory === category.id ? 1.1 : 1,
                     color: selectedCategory === category.id 
-                      ? restaurantSettings.primaryColor 
+                      ? branding.primaryColor 
                       : (darkMode ? '#9ca3af' : '#6b7280')
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 20 }}
@@ -1413,7 +1378,7 @@ export default function Home() {
                   className={`text-xs font-semibold truncate max-w-[60px]`}
                   animate={{
                     color: selectedCategory === category.id 
-                      ? restaurantSettings.primaryColor 
+                      ? branding.primaryColor 
                       : (darkMode ? '#9ca3af' : '#6b7280')
                   }}
                 >
@@ -1423,7 +1388,7 @@ export default function Home() {
                   <motion.div
                     layoutId="mobile-nav-indicator"
                     className="absolute -top-1 w-12 h-1 rounded-full"
-                    style={{ backgroundColor: restaurantSettings.primaryColor }}
+                    style={{ backgroundColor: branding.primaryColor }}
                   />
                 )}
               </motion.button>
@@ -1489,7 +1454,7 @@ export default function Home() {
                             : 'bg-gray-100 text-gray-700'
                       }`}
                       style={selectedCategory === category.id ? {
-                        background: `linear-gradient(135deg, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`
+                        background: `linear-gradient(135deg, ${branding.primaryColor}, ${branding.primaryColor}dd)`
                       } : {}}
                     >
                       {getLocalizedText(category, 'name')}
@@ -1517,9 +1482,9 @@ export default function Home() {
             >
               <h3 
                 className={`text-2xl font-bold`}
-                style={{ color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor }}
+                style={{ color: darkMode ? branding.primaryColor : branding.primaryColor }}
               >
-                {restaurantSettings.name}
+                {branding.name}
               </h3>
             </motion.div>
 
@@ -1532,7 +1497,7 @@ export default function Home() {
             >
               {t.builtBy} <span 
                 className={`font-semibold`}
-                style={{ color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor }}
+                style={{ color: darkMode ? branding.primaryColor : branding.primaryColor }}
               >
                 Alkhwarizm
               </span>

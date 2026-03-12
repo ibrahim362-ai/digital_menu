@@ -1,8 +1,18 @@
 # Deployment Scripts
 
-This directory contains automated deployment scripts for the Restaurant Management System.
+Automated deployment scripts for the Restaurant Management System.
 
-## Scripts Overview
+## Core Scripts
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `deploy-all.sh` | Complete deployment | First-time setup |
+| `deploy-to-production.sh` | Production deployment | Production server |
+| `update.sh` | Update application | After code changes |
+| `backup.sh` | Backup database & uploads | Before updates |
+| `check-status.sh` | Check system status | Troubleshooting |
+
+## Setup Scripts (Individual)
 
 | Script | Purpose |
 |--------|---------|
@@ -11,19 +21,21 @@ This directory contains automated deployment scripts for the Restaurant Manageme
 | `setup-backend.sh` | Configure and setup backend |
 | `setup-frontend.sh` | Build and deploy frontend |
 | `setup-nginx.sh` | Configure Nginx web server |
-| `start-backend.sh` | Start backend with PM2 |
 | `setup-ssl.sh` | Install SSL certificate |
 | `setup-firewall.sh` | Configure UFW firewall |
-| `update.sh` | Update application to latest version |
-| `backup.sh` | Backup database and uploads |
+| `start-backend.sh` | Start backend with PM2 |
 
 ## Quick Start
 
+### Option 1: One Command (Recommended)
 ```bash
-# Make scripts executable
 chmod +x deploy/*.sh
+./deploy/deploy-all.sh
+```
 
-# Run deployment
+### Option 2: Step by Step
+```bash
+chmod +x deploy/*.sh
 ./deploy/install.sh
 ./deploy/setup-database.sh
 ./deploy/setup-backend.sh
@@ -34,4 +46,22 @@ chmod +x deploy/*.sh
 ./deploy/setup-ssl.sh
 ```
 
-See `DEPLOYMENT_GUIDE.md` for detailed instructions.
+## Common Tasks
+
+### Update Application
+```bash
+./deploy/backup.sh
+./deploy/update.sh
+```
+
+### Check Status
+```bash
+./deploy/check-status.sh
+```
+
+### Restart Backend
+```bash
+pm2 restart restaurant-backend
+```
+
+See `../DEPLOYMENT.md` for detailed instructions.
