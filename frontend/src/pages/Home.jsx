@@ -1263,33 +1263,7 @@ export default function Home() {
                       transition={{ delay: 0.5 }}
                       className="mt-auto space-y-3"
                     >
-                      <motion.button
-                        whileHover={{ 
-                          scale: 1.02, 
-                          y: -2,
-                          boxShadow: `0 15px 40px ${restaurantSettings.primaryColor}60`,
-                          transition: { type: "spring", stiffness: 400, damping: 10 }
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-3 text-lg relative overflow-hidden touch-target haptic-press"
-                        style={{ 
-                          background: `linear-gradient(135deg, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
-                          boxShadow: `0 10px 30px ${restaurantSettings.primaryColor}40`,
-                          minHeight: '52px'
-                        }}
-                      >
-                        {/* Shimmer effect on hover */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                          initial={{ x: '-100%' }}
-                          whileHover={{ 
-                            x: '100%',
-                            transition: { duration: 0.6, ease: "easeInOut" }
-                          }}
-                        />
-                        <ShoppingBag className="w-6 h-6 relative z-10" />
-                        <span className="relative z-10">Order Now</span>
-                      </motion.button>
+                      {/* Order Now button hidden as requested */}
                       
                       <div className="grid grid-cols-2 gap-3">
                         <motion.button
