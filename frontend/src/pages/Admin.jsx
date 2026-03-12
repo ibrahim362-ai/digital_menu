@@ -20,7 +20,7 @@ export default function Admin() {
   const [productForm, setProductForm] = useState({ 
     name: '', nameOr: '', nameAm: '', nameSo: '', nameAr: '',
     description: '', descriptionOr: '', descriptionAm: '', descriptionSo: '', descriptionAr: '',
-    price: '', image: '', categoryId: '' 
+    price: '', prepTime: '', image: '', categoryId: '' 
   });
   const [editingProductId, setEditingProductId] = useState(null);
   const [qrcodes, setQrcodes] = useState([]);
@@ -261,7 +261,7 @@ export default function Admin() {
       } else {
         await axios.post(`${API_URL}/products`, productForm, axiosConfig);
       }
-      setProductForm({ name: '', nameOr: '', nameAm: '', nameSo: '', nameAr: '', description: '', descriptionOr: '', descriptionAm: '', descriptionSo: '', descriptionAr: '', price: '', image: '', categoryId: '' });
+      setProductForm({ name: '', nameOr: '', nameAm: '', nameSo: '', nameAr: '', description: '', descriptionOr: '', descriptionAm: '', descriptionSo: '', descriptionAr: '', price: '', prepTime: '', image: '', categoryId: '' });
       fetchProducts();
     } catch (err) { console.error('Failed to save product'); }
   };
@@ -271,13 +271,13 @@ export default function Admin() {
     setProductForm({
       name: product.name, nameOr: product.nameOr || '', nameAm: product.nameAm || '', nameSo: product.nameSo || '', nameAr: product.nameAr || '',
       description: product.description || '', descriptionOr: product.descriptionOr || '', descriptionAm: product.descriptionAm || '', descriptionSo: product.descriptionSo || '', descriptionAr: product.descriptionAr || '',
-      price: product.price, image: product.image || '', categoryId: product.categoryId
+      price: product.price, prepTime: product.prepTime || '', image: product.image || '', categoryId: product.categoryId
     });
   };
 
   const cancelEditProduct = () => {
     setEditingProductId(null);
-    setProductForm({ name: '', nameOr: '', nameAm: '', nameSo: '', nameAr: '', description: '', descriptionOr: '', descriptionAm: '', descriptionSo: '', descriptionAr: '', price: '', image: '', categoryId: '' });
+    setProductForm({ name: '', nameOr: '', nameAm: '', nameSo: '', nameAr: '', description: '', descriptionOr: '', descriptionAm: '', descriptionSo: '', descriptionAr: '', price: '', prepTime: '', image: '', categoryId: '' });
   };
 
   const handleDeleteProduct = async (id) => {
@@ -890,6 +890,13 @@ export default function Admin() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Price (Birr) *</label>
                       <input type="number" step="0.01" placeholder="0.00" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all" required />
                     </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Prep Time</label>
+                      <input type="text" placeholder="e.g., 15-20 min" value={productForm.prepTime} onChange={(e) => setProductForm({ ...productForm, prepTime: e.target.value })} className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all" />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
                       <select value={productForm.categoryId} onChange={(e) => setProductForm({ ...productForm, categoryId: e.target.value })} className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all" required>

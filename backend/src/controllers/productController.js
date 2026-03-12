@@ -14,12 +14,13 @@ export const getProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, nameOr, nameAm, nameSo, nameAr, description, descriptionOr, descriptionAm, descriptionSo, descriptionAr, price, image, categoryId } = req.body;
+    const { name, nameOr, nameAm, nameSo, nameAr, description, descriptionOr, descriptionAm, descriptionSo, descriptionAr, price, prepTime, image, categoryId } = req.body;
     const product = await prisma.product.create({
       data: { 
         name, nameOr, nameAm, nameSo, nameAr,
         description, descriptionOr, descriptionAm, descriptionSo, descriptionAr,
-        price: parseFloat(price), 
+        price: parseFloat(price),
+        prepTime: prepTime || null,
         image, 
         categoryId: parseInt(categoryId) 
       },
@@ -33,13 +34,14 @@ export const createProduct = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
   try {
-    const { name, nameOr, nameAm, nameSo, nameAr, description, descriptionOr, descriptionAm, descriptionSo, descriptionAr, price, image, categoryId } = req.body;
+    const { name, nameOr, nameAm, nameSo, nameAr, description, descriptionOr, descriptionAm, descriptionSo, descriptionAr, price, prepTime, image, categoryId } = req.body;
     const product = await prisma.product.update({
       where: { id: parseInt(req.params.id) },
       data: { 
         name, nameOr, nameAm, nameSo, nameAr,
         description, descriptionOr, descriptionAm, descriptionSo, descriptionAr,
-        price: parseFloat(price), 
+        price: parseFloat(price),
+        prepTime: prepTime || null,
         image, 
         categoryId: parseInt(categoryId) 
       },

@@ -1140,6 +1140,25 @@ export default function Home() {
                           </span>
                         </div>
                       </motion.div>
+
+                      {/* Prep Time Section */}
+                      {selectedProduct.prepTime && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 }}
+                          whileHover={{ scale: 1.02 }}
+                          className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl shadow-lg mb-6 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-blue-50 to-indigo-50'}`}
+                        >
+                          <Clock className="w-8 h-8 text-blue-600" />
+                          <div>
+                            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Prep Time</p>
+                            <span className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                              {selectedProduct.prepTime}
+                            </span>
+                          </div>
+                        </motion.div>
+                      )}
                     </motion.div>
 
                     {/* Description */}
