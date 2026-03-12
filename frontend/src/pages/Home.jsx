@@ -14,7 +14,12 @@ import {
   ShoppingBag,
   DollarSign,
   Clock,
-  Users
+  Users,
+  X,
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  Menu
 } from 'lucide-react';
 
 const translations = {
@@ -119,12 +124,16 @@ export default function Home() {
   });
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [restaurantSettings, setRestaurantSettings] = useState({
     name: 'Digital Menu',
     subname: 'Browse our delicious offerings',
     logo: null,
     primaryColor: '#d97706'
   });
+  const [dragX, setDragX] = useState(0);
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
@@ -143,6 +152,34 @@ export default function Home() {
     fetchMenuProducts();
     fetchRestaurantSettings();
   }, []);
+
+  // Update CSS variables when restaurant settings change
+  useEffect(() => {
+    if (restaurantSettings.primaryColor) {
+      // Convert hex to RGB for CSS variables
+      const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : null;
+      };
+
+      const rgb = hexToRgb(restaurantSettings.primaryColor);
+      if (rgb) {
+        document.documentElement.style.setProperty('--color-primary', restaurantSettings.primaryColor);
+        document.documentElement.style.setProperty('--color-primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+        
+        // Calculate lighter and darker variants
+        const lighterColor = `#${Math.min(255, rgb.r + 40).toString(16).padStart(2, '0')}${Math.min(255, rgb.g + 40).toString(16).padStart(2, '0')}${Math.min(255, rgb.b + 40).toString(16).padStart(2, '0')}`;
+        const darkerColor = `#${Math.max(0, rgb.r - 40).toString(16).padStart(2, '0')}${Math.max(0, rgb.g - 40).toString(16).padStart(2, '0')}${Math.max(0, rgb.b - 40).toString(16).padStart(2, '0')}`;
+        
+        document.documentElement.style.setProperty('--color-primary-light', lighterColor);
+        document.documentElement.style.setProperty('--color-primary-dark', darkerColor);
+      }
+    }
+  }, [restaurantSettings.primaryColor]);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -165,7 +202,14 @@ export default function Home() {
       const { data } = await axios.get(`${API_URL}/products/menu`);
       setMenuProducts(data);
       
-      const uniqueCategories = [...new Set(data.map(p => p.category))];
+      // Extract unique categories by id
+      const categoryMap = new Map();
+      data.forEach(p => {
+        if (p.category && !categoryMap.has(p.category.id)) {
+          categoryMap.set(p.category.id, p.category);
+        }
+      });
+      const uniqueCategories = Array.from(categoryMap.values());
       setCategories(uniqueCategories);
       setLoading(false);
     } catch (err) {
@@ -202,13 +246,68 @@ export default function Home() {
     { code: 'ar', name: 'العربية', flag: '🇸🇦' }
   ];
 
+  // Helper function to get product images as array
+  const getProductImages = (product) => {
+    if (!product.image) return [];
+    
+    // Try to parse as JSON array
+    try {
+      const parsed = JSON.parse(product.image);
+      return Array.isArray(parsed) ? parsed : [product.image];
+    } catch {
+      // If not JSON, check if comma-separated
+      if (product.image.includes(',')) {
+        return product.image.split(',').map(img => img.trim());
+      }
+      // Single image
+      return [product.image];
+    }
+  };
+
+  // Reset image index when product changes
+  useEffect(() => {
+    if (selectedProduct) {
+      setCurrentImageIndex(0);
+      setDragX(0);
+    }
+  }, [selectedProduct]);
+
+  const handlePrevImage = () => {
+    const images = getProductImages(selectedProduct);
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    const images = getProductImages(selectedProduct);
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  // Swipe gesture handler for image carousel
+  const handleDragEnd = (event, info) => {
+    const images = getProductImages(selectedProduct);
+    const swipeThreshold = 50; // Minimum swipe distance
+    
+    if (info.offset.x > swipeThreshold) {
+      // Swiped right - go to previous image
+      handlePrevImage();
+    } else if (info.offset.x < -swipeThreshold) {
+      // Swiped left - go to next image
+      handleNextImage();
+    }
+  };
+
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`} dir={isRTL ? 'rtl' : 'ltr'} style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Navigation */}
       <motion.nav 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={`backdrop-blur-md ${darkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90 border-amber-200'} shadow-2xl border-b-4 sticky top-0 z-50`}
+        className={`backdrop-blur-md border-b-4 sticky top-0 z-50`}
+        style={{
+          backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          borderColor: darkMode ? 'var(--color-border)' : 'var(--color-primary)',
+          boxShadow: 'var(--shadow-xl)'
+        }}
       >
         <div className="max-w-7xl mx-auto px-6 py-5">
           <div className="flex justify-between items-center">
@@ -254,41 +353,99 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ 
+                    scale: 1, 
+                    rotate: 0,
+                    transition: {
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      delay: 0.2
+                    }
+                  }}
+                  whileHover={{ 
+                    scale: 1.1,
+                    rotate: 15,
+                    transition: { type: "spring", stiffness: 400, damping: 10 }
+                  }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setShowLangMenu(!showLangMenu)}
-                  className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg`}
+                  className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg touch-target haptic-press`}
                   style={{
                     backgroundColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}20`,
-                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor
+                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor,
+                    minWidth: '44px',
+                    minHeight: '44px'
                   }}
                 >
-                  <Globe className="w-5 h-5" />
+                  <Globe className="w-6 h-6" />
                 </motion.button>
                 
                 <AnimatePresence>
                   {showLangMenu && (
                     <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ 
+                        opacity: 1, 
+                        y: 0, 
+                        scale: 1,
+                        transition: {
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 25
+                        }
+                      }}
+                      exit={{ 
+                        opacity: 0, 
+                        y: -10, 
+                        scale: 0.95,
+                        transition: { duration: 0.2 }
+                      }}
                       className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-56 rounded-xl shadow-2xl ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-amber-200'} overflow-hidden z-50`}
                     >
-                      {languages.map((lang) => (
+                      {languages.map((lang, index) => (
                         <motion.button
                           key={lang.code}
-                          whileHover={{ x: isRTL ? -5 : 5 }}
+                          initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
+                          animate={{ 
+                            opacity: 1, 
+                            x: 0,
+                            transition: {
+                              delay: index * 0.05,
+                              type: "spring",
+                              stiffness: 300
+                            }
+                          }}
+                          whileHover={{ 
+                            x: isRTL ? -5 : 5,
+                            backgroundColor: language === lang.code 
+                              ? (darkMode ? '#d97706' : '#fef3c7')
+                              : (darkMode ? '#374151' : '#fffbeb'),
+                            transition: { type: "spring", stiffness: 400, damping: 10 }
+                          }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => {
                             setLanguage(lang.code);
                             setShowLangMenu(false);
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors touch-target haptic-press ${
                             language === lang.code 
                               ? darkMode ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-900'
                               : darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-amber-50 text-gray-700'
                           }`}
+                          style={{ minHeight: '44px' }}
                         >
-                          <span className="text-2xl">{lang.flag}</span>
+                          <motion.span 
+                            className="text-2xl"
+                            whileHover={{ 
+                              scale: 1.2,
+                              rotate: 10,
+                              transition: { type: "spring", stiffness: 400 }
+                            }}
+                          >
+                            {lang.flag}
+                          </motion.span>
                           <span className="font-medium">{lang.name}</span>
                         </motion.button>
                       ))}
@@ -298,23 +455,48 @@ export default function Home() {
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.05, rotate: 180 }}
-                whileTap={{ scale: 0.95 }}
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ 
+                  scale: 1, 
+                  rotate: 0,
+                  transition: {
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    delay: 0.3
+                  }
+                }}
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotate: 180,
+                  transition: { type: "spring", stiffness: 300, damping: 15 }
+                }}
+                whileTap={{ scale: 0.9 }}
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg`}
+                className={`p-3 rounded-xl transition-all shadow-md hover:shadow-lg touch-target haptic-press`}
                 style={{
                   backgroundColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}20`,
-                  color: darkMode ? '#fbbf24' : restaurantSettings.primaryColor
+                  color: darkMode ? '#fbbf24' : restaurantSettings.primaryColor,
+                  minWidth: '44px',
+                  minHeight: '44px'
                 }}
               >
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                <motion.div
+                  animate={{ 
+                    rotate: darkMode ? 0 : 180,
+                    scale: darkMode ? 1 : 0.8
+                  }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+                </motion.div>
               </motion.button>
             </div>
           </div>
         </div>
       </motion.nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8 pb-24 md:pb-8">
         {loading ? (
           <div className="text-center py-20">
             <motion.div
@@ -336,15 +518,38 @@ export default function Home() {
           </motion.div>
         ) : (
           <>
-            {/* Search Bar */}
+            {/* Search Bar with Enhanced Animation */}
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transition: {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 20
+                }
+              }}
               className="mb-8"
             >
               <div className="relative max-w-2xl mx-auto">
-                <Search className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-amber-600'} w-6 h-6`} />
-                <input
+                <motion.div
+                  initial={{ scale: 0, x: isRTL ? 20 : -20 }}
+                  animate={{ scale: 1, x: 0 }}
+                  transition={{ 
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    delay: 0.1
+                  }}
+                >
+                  <Search className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-amber-600'} w-6 h-6`} />
+                </motion.div>
+                <motion.input
+                  whileFocus={{ 
+                    scale: 1.02,
+                    transition: { type: "spring", stiffness: 300 }
+                  }}
                   type="text"
                   placeholder="Search menu items..."
                   value={searchTerm}
@@ -358,18 +563,41 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* Category Filters */}
+            {/* Category Filters with Staggered Animation */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transition: {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 20,
+                  delay: 0.1
+                }
+              }}
               className="mb-10 flex flex-wrap gap-3 justify-center"
             >
               <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  transition: {
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    delay: 0.15
+                  }
+                }}
+                whileHover={{ 
+                  scale: 1.05, 
+                  y: -2,
+                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedCategory('all')}
-                className={`px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 ${
+                className={`px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 touch-target haptic-press ${
                   selectedCategory === 'all'
                     ? 'text-white'
                     : darkMode
@@ -378,22 +606,44 @@ export default function Home() {
                 }`}
                 style={selectedCategory === 'all' ? {
                   background: `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
-                  boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`
+                  boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`,
+                  minHeight: '48px'
                 } : {
                   borderColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}30`,
-                  color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor
+                  color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor,
+                  minHeight: '48px'
                 }}
               >
-                <Filter className="w-5 h-5" />
+                <motion.div
+                  animate={{ rotate: selectedCategory === 'all' ? 360 : 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Filter className="w-5 h-5" />
+                </motion.div>
                 {t.allItems}
               </motion.button>
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <motion.button
                   key={category.id}
-                  whileHover={{ scale: 1.05, y: -2 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ 
+                    opacity: 1, 
+                    scale: 1,
+                    transition: {
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      delay: 0.15 + (index + 1) * 0.05
+                    }
+                  }}
+                  whileHover={{ 
+                    scale: 1.05, 
+                    y: -2,
+                    transition: { type: "spring", stiffness: 400, damping: 10 }
+                  }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`px-8 py-4 rounded-xl font-bold transition-all shadow-lg ${
+                  className={`px-8 py-4 rounded-xl font-bold transition-all shadow-lg touch-target haptic-press ${
                     selectedCategory === category.id
                       ? 'text-white'
                       : darkMode
@@ -402,10 +652,12 @@ export default function Home() {
                   }`}
                   style={selectedCategory === category.id ? {
                     background: `linear-gradient(to right, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
-                    boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`
+                    boxShadow: darkMode ? `0 10px 25px ${restaurantSettings.primaryColor}50` : `0 10px 25px ${restaurantSettings.primaryColor}30`,
+                    minHeight: '48px'
                   } : {
                     borderColor: darkMode ? '#374151' : `${restaurantSettings.primaryColor}30`,
-                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor
+                    color: darkMode ? '#e5e7eb' : restaurantSettings.primaryColor,
+                    minHeight: '48px'
                   }}
                 >
                   {getLocalizedText(category, 'name')}
@@ -413,83 +665,202 @@ export default function Home() {
               ))}
             </motion.div>
 
-            {/* Products Grid */}
+            {/* Products Grid - Enhanced with Staggered Spring Animations */}
             <motion.div 
               layout
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
             >
-              <AnimatePresence>
+              <AnimatePresence mode="popLayout">
                 {filteredProducts.map((product, index) => (
                   <motion.div
                     key={product.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ y: -10, scale: 1.02 }}
-                    className={`rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-amber-100'}`}
+                    layoutId={`product-${product.id}`}
+                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: 1, 
+                      y: 0,
+                      transition: {
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                        delay: index * 0.03
+                      }
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      scale: 0.8, 
+                      y: -20,
+                      transition: { duration: 0.2 }
+                    }}
+                    whileHover={{ 
+                      y: -10, 
+                      scale: 1.03,
+                      transition: { 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 10 
+                      }
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedProduct(product)}
+                    className={`rounded-2xl overflow-hidden cursor-pointer backdrop-blur-md transition-all ${
+                      darkMode 
+                        ? 'bg-gray-800/30 border border-gray-700/30 hover:bg-gray-800/40' 
+                        : 'bg-white/30 border border-white/40 hover:bg-white/40'
+                    }`}
+                    style={{
+                      boxShadow: darkMode 
+                        ? 'inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3)'
+                        : 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                    }}
                   >
-                    {product.image ? (
-                      <div className="relative h-64 overflow-hidden">
-                        <motion.img 
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ duration: 0.3 }}
-                          src={`${API_URL.replace('/api', '')}${product.image}`} 
-                          alt={getLocalizedText(product, 'name')}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                        <div 
-                          className="absolute top-4 right-4 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2"
-                          style={{ backgroundColor: restaurantSettings.primaryColor }}
-                        >
-                          <Star className="w-4 h-4 fill-current" />
-                          {t.popular}
+                    {(() => {
+                      const images = getProductImages(product);
+                      const firstImage = images.length > 0 ? images[0] : null;
+                      return firstImage ? (
+                        <div className="relative h-40 md:h-48 overflow-hidden">
+                          <motion.img 
+                            initial={{ scale: 1.2, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                            whileHover={{ 
+                              scale: 1.15,
+                              transition: { duration: 0.4 }
+                            }}
+                            src={`${API_URL.replace('/api', '')}${firstImage}`} 
+                            alt={getLocalizedText(product, 'name')}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          {/* Shimmer overlay while loading */}
+                          <div className={`absolute inset-0 ${darkMode ? 'shimmer-dark' : 'shimmer'} pointer-events-none`} 
+                            style={{ 
+                              opacity: 0,
+                              animation: 'shimmer 2s ease-in-out'
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                          <motion.div 
+                            initial={{ scale: 0, rotate: -180 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ 
+                              type: "spring", 
+                              stiffness: 260, 
+                              damping: 20,
+                              delay: index * 0.03 + 0.2
+                            }}
+                            whileHover={{ 
+                              scale: 1.1, 
+                              rotate: 5,
+                              transition: { type: "spring", stiffness: 400 }
+                            }}
+                            className="absolute top-2 right-2 text-white px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1"
+                            style={{ 
+                              backgroundColor: `${restaurantSettings.primaryColor}dd`,
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                            }}
+                          >
+                            <Star className="w-3 h-3 fill-current" />
+                          </motion.div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="h-64 bg-gradient-to-br from-amber-400 via-orange-400 to-red-400 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 opacity-20">
-                          <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
-                          <div className="absolute bottom-10 right-10 w-40 h-40 bg-white rounded-full"></div>
+                      ) : (
+                        <div className="h-40 md:h-48 bg-gradient-to-br from-amber-400 via-orange-400 to-red-400 flex items-center justify-center relative overflow-hidden">
+                          <motion.div 
+                            className="absolute inset-0 opacity-20"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.8 }}
+                          >
+                            <div className="absolute top-5 left-5 w-16 h-16 bg-white rounded-full blur-2xl"></div>
+                            <div className="absolute bottom-5 right-5 w-20 h-20 bg-white rounded-full blur-2xl"></div>
+                          </motion.div>
+                          <motion.span 
+                            initial={{ scale: 0, rotate: -180 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ 
+                              type: "spring", 
+                              stiffness: 200, 
+                              damping: 15,
+                              delay: index * 0.03
+                            }}
+                            className="text-white text-4xl md:text-5xl font-bold drop-shadow-2xl z-10"
+                          >
+                            {getLocalizedText(product, 'name').charAt(0)}
+                          </motion.span>
                         </div>
-                        <span className="text-white text-7xl font-bold drop-shadow-2xl z-10">
-                          {getLocalizedText(product, 'name').charAt(0)}
-                        </span>
-                      </div>
-                    )}
+                      );
+                    })()}
                     
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} flex-1`}>
-                          {getLocalizedText(product, 'name')}
-                        </h3>
+                    <div className="p-3 md:p-4">
+                      <motion.h3 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.03 + 0.1 }}
+                        className={`text-sm md:text-base font-bold mb-2 line-clamp-2 leading-snug min-h-[44px] flex items-center`}
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
+                        {getLocalizedText(product, 'name')}
+                      </motion.h3>
+                      
+                      <div className="flex items-center justify-between mb-3">
                         <motion.span 
-                          whileHover={{ scale: 1.1 }}
-                          className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent flex items-center gap-1"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ 
+                            delay: index * 0.03 + 0.15,
+                            type: "spring",
+                            stiffness: 200
+                          }}
+                          whileHover={{ 
+                            scale: 1.1,
+                            transition: { type: "spring", stiffness: 400 }
+                          }}
+                          className="text-lg md:text-xl font-extrabold flex items-center gap-1"
+                          style={{ 
+                            background: `linear-gradient(135deg, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                          }}
                         >
-                          <DollarSign className="w-6 h-6 text-green-600" />
+                          <DollarSign className="w-4 h-4 text-green-600" />
                           {product.price}
                         </motion.span>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ 
+                            delay: index * 0.03 + 0.2,
+                            type: "spring"
+                          }}
+                          whileHover={{ 
+                            scale: 1.2, 
+                            rotate: 15,
+                            transition: { type: "spring", stiffness: 400 }
+                          }}
+                        >
+                          <Info className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                        </motion.div>
                       </div>
                       
-                      <span 
-                        className={`inline-block px-4 py-2 rounded-full text-sm font-bold mb-4 border`}
+                      <motion.span 
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ 
+                          delay: index * 0.03 + 0.25,
+                          type: "spring",
+                          stiffness: 200
+                        }}
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm`}
                         style={{
-                          backgroundColor: darkMode ? `${restaurantSettings.primaryColor}20` : `${restaurantSettings.primaryColor}15`,
+                          backgroundColor: darkMode ? `${restaurantSettings.primaryColor}25` : `${restaurantSettings.primaryColor}20`,
                           color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor,
-                          borderColor: darkMode ? `${restaurantSettings.primaryColor}30` : `${restaurantSettings.primaryColor}30`
+                          border: `1px solid ${restaurantSettings.primaryColor}40`
                         }}
                       >
                         {getLocalizedText(product.category, 'name')}
-                      </span>
-                      
-                      {getLocalizedText(product, 'description') && (
-                        <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {getLocalizedText(product, 'description')}
-                        </p>
-                      )}
+                      </motion.span>
                     </div>
                   </motion.div>
                 ))}
@@ -508,6 +879,637 @@ export default function Home() {
             )}
           </>
         )}
+
+        {/* Enhanced Product Detail Modal with Layout Transitions */}
+        <AnimatePresence>
+          {selectedProduct && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setSelectedProduct(null)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto"
+            >
+              <motion.div
+                layoutId={`product-${selectedProduct.id}`}
+                initial={{ scale: 0.9, opacity: 0, y: 50 }}
+                animate={{ 
+                  scale: 1, 
+                  opacity: 1, 
+                  y: 0,
+                  transition: {
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30
+                  }
+                }}
+                exit={{ 
+                  scale: 0.9, 
+                  opacity: 0, 
+                  y: 50,
+                  transition: { duration: 0.2 }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className={`relative max-w-5xl w-full my-8 rounded-3xl shadow-2xl overflow-hidden ${darkMode ? 'bg-gray-900' : 'bg-white'}`}
+              >
+                {/* Close Button with Enhanced Animation */}
+                <motion.button
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ 
+                    scale: 1, 
+                    rotate: 0,
+                    transition: {
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      delay: 0.2
+                    }
+                  }}
+                  whileHover={{ 
+                    scale: 1.1, 
+                    rotate: 90,
+                    transition: { type: "spring", stiffness: 400 }
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setSelectedProduct(null)}
+                  className={`absolute top-6 ${isRTL ? 'left-6' : 'right-6'} z-20 p-3 rounded-full shadow-2xl backdrop-blur-sm ${darkMode ? 'bg-gray-800/90 text-white hover:bg-gray-700' : 'bg-white/90 text-gray-800 hover:bg-gray-100'}`}
+                >
+                  <X className="w-6 h-6" />
+                </motion.button>
+
+                <div className="grid md:grid-cols-2 gap-0">
+                  {/* Left Side - Image Carousel */}
+                  <div className={`relative ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                    {(() => {
+                      const images = getProductImages(selectedProduct);
+                      const hasImages = images.length > 0;
+                      const currentImage = hasImages ? images[currentImageIndex] : null;
+
+                      return hasImages ? (
+                        <div className="relative h-full min-h-[400px] md:min-h-[600px] group">
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={currentImageIndex}
+                              drag="x"
+                              dragConstraints={{ left: 0, right: 0 }}
+                              dragElastic={0.2}
+                              onDragEnd={handleDragEnd}
+                              className="w-full h-full cursor-grab active:cursor-grabbing"
+                            >
+                              <motion.img
+                                initial={{ opacity: 0, scale: 1.1 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{ duration: 0.4 }}
+                                src={`${API_URL.replace('/api', '')}${currentImage}`}
+                                alt={`${getLocalizedText(selectedProduct, 'name')} - Image ${currentImageIndex + 1}`}
+                                className="w-full h-full object-cover pointer-events-none"
+                              />
+                            </motion.div>
+                          </AnimatePresence>
+                          
+                          {/* Gradient Overlays */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none"></div>
+                          
+                          {/* Navigation Arrows with Enhanced Animations */}
+                          {images.length > 1 && (
+                            <>
+                              <motion.button
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ 
+                                  opacity: 1, 
+                                  x: 0,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 200,
+                                    delay: 0.3
+                                  }
+                                }}
+                                whileHover={{ 
+                                  scale: 1.15, 
+                                  x: -3,
+                                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                                }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handlePrevImage}
+                                className={`absolute left-4 top-1/2 -translate-y-1/2 p-4 rounded-full shadow-2xl transition-all ${darkMode ? 'bg-gray-900/80 text-white hover:bg-gray-800' : 'bg-white/80 text-gray-800 hover:bg-white'} backdrop-blur-sm relative overflow-hidden`}
+                              >
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                  initial={{ x: '-100%' }}
+                                  whileHover={{ 
+                                    x: '100%',
+                                    transition: { duration: 0.6, ease: "easeInOut" }
+                                  }}
+                                />
+                                <ChevronLeft className="w-6 h-6 relative z-10" />
+                              </motion.button>
+                              <motion.button
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ 
+                                  opacity: 1, 
+                                  x: 0,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 200,
+                                    delay: 0.3
+                                  }
+                                }}
+                                whileHover={{ 
+                                  scale: 1.15, 
+                                  x: 3,
+                                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                                }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleNextImage}
+                                className={`absolute right-4 top-1/2 -translate-y-1/2 p-4 rounded-full shadow-2xl transition-all ${darkMode ? 'bg-gray-900/80 text-white hover:bg-gray-800' : 'bg-white/80 text-gray-800 hover:bg-white'} backdrop-blur-sm relative overflow-hidden`}
+                              >
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                  initial={{ x: '-100%' }}
+                                  whileHover={{ 
+                                    x: '100%',
+                                    transition: { duration: 0.6, ease: "easeInOut" }
+                                  }}
+                                />
+                                <ChevronRight className="w-6 h-6 relative z-10" />
+                              </motion.button>
+
+                              {/* Thumbnail Preview Strip with Staggered Animation */}
+                              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 p-3 rounded-2xl backdrop-blur-md bg-black/30">
+                                {images.map((img, index) => (
+                                  <motion.button
+                                    key={index}
+                                    initial={{ opacity: 0, scale: 0, y: 20 }}
+                                    animate={{ 
+                                      opacity: 1, 
+                                      scale: 1, 
+                                      y: 0,
+                                      transition: {
+                                        type: "spring",
+                                        stiffness: 260,
+                                        damping: 20,
+                                        delay: 0.4 + index * 0.05
+                                      }
+                                    }}
+                                    whileHover={{ 
+                                      scale: 1.15, 
+                                      y: -4,
+                                      transition: { type: "spring", stiffness: 400, damping: 10 }
+                                    }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setCurrentImageIndex(index)}
+                                    className={`relative w-16 h-16 rounded-lg overflow-hidden transition-all ${
+                                      index === currentImageIndex
+                                        ? 'ring-4 ring-white shadow-xl'
+                                        : 'opacity-60 hover:opacity-100'
+                                    }`}
+                                  >
+                                    <img
+                                      src={`${API_URL.replace('/api', '')}${img}`}
+                                      alt={`Thumbnail ${index + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </motion.button>
+                                ))}
+                              </div>
+
+                              {/* Image Counter Badge */}
+                              <div className={`absolute top-6 left-6 px-4 py-2 rounded-full shadow-lg backdrop-blur-sm ${darkMode ? 'bg-gray-900/80 text-white' : 'bg-white/80 text-gray-800'}`}>
+                                <span className="text-sm font-bold">
+                                  {currentImageIndex + 1} / {images.length}
+                                </span>
+                              </div>
+                            </>
+                          )}
+
+                          {/* Featured Badge */}
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.3, type: "spring" }}
+                            className="absolute top-6 right-6 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 backdrop-blur-sm"
+                            style={{ backgroundColor: `${restaurantSettings.primaryColor}dd` }}
+                          >
+                            <Star className="w-4 h-4 fill-current" />
+                            <span className="text-sm">{t.featured}</span>
+                          </motion.div>
+                        </div>
+                      ) : (
+                        <div className="h-full min-h-[400px] md:min-h-[600px] bg-gradient-to-br from-amber-400 via-orange-400 to-red-400 flex items-center justify-center relative overflow-hidden">
+                          <div className="absolute inset-0 opacity-10">
+                            <div className="absolute top-20 left-20 w-60 h-60 bg-white rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-20 right-20 w-80 h-80 bg-white rounded-full blur-3xl"></div>
+                          </div>
+                          <motion.span 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", damping: 10 }}
+                            className="text-white text-9xl font-bold drop-shadow-2xl z-10"
+                          >
+                            {getLocalizedText(selectedProduct, 'name').charAt(0)}
+                          </motion.span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Right Side - Product Information */}
+                  <div className="p-8 md:p-10 flex flex-col">
+                    {/* Header Section */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <span 
+                          className="inline-block px-4 py-2 rounded-full text-sm font-bold"
+                          style={{
+                            backgroundColor: `${restaurantSettings.primaryColor}20`,
+                            color: restaurantSettings.primaryColor
+                          }}
+                        >
+                          {getLocalizedText(selectedProduct.category, 'name')}
+                        </span>
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          className="flex items-center gap-1 text-amber-500"
+                        >
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-current" />
+                          ))}
+                        </motion.div>
+                      </div>
+
+                      <h2 className={`text-4xl md:text-5xl font-bold mb-4 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {getLocalizedText(selectedProduct, 'name')}
+                      </h2>
+
+                      {/* Price Section */}
+                      <motion.div 
+                        whileHover={{ scale: 1.02 }}
+                        className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl shadow-lg mb-6 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-amber-50 to-orange-50'}`}
+                      >
+                        <DollarSign className="w-8 h-8 text-green-600" />
+                        <div>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Price</p>
+                          <span className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                            {selectedProduct.price}
+                          </span>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+
+                    {/* Description */}
+                    {getLocalizedText(selectedProduct, 'description') && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mb-6"
+                      >
+                        <h3 className={`text-lg font-bold mb-3 flex items-center gap-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          <Info className="w-5 h-5" />
+                          About this item
+                        </h3>
+                        <p className={`text-base leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {getLocalizedText(selectedProduct, 'description')}
+                        </p>
+                      </motion.div>
+                    )}
+
+                    {/* Product Details Grid */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className={`grid grid-cols-2 gap-4 p-6 rounded-2xl mb-6 ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                          >
+                            <ShoppingBag className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                          </div>
+                          <div>
+                            <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Category</p>
+                            <p className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {getLocalizedText(selectedProduct.category, 'name')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                          >
+                            <Clock className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                          </div>
+                          <div>
+                            <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Prep Time</p>
+                            <p className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              15-20 min
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                          >
+                            <TrendingUp className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                          </div>
+                          <div>
+                            <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Status</p>
+                            <p className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              Available
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${restaurantSettings.primaryColor}20` }}
+                          >
+                            <Users className="w-5 h-5" style={{ color: restaurantSettings.primaryColor }} />
+                          </div>
+                          <div>
+                            <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Serves</p>
+                            <p className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              1-2 People
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* Action Buttons with Enhanced Animations and Touch Targets */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="mt-auto space-y-3"
+                    >
+                      <motion.button
+                        whileHover={{ 
+                          scale: 1.02, 
+                          y: -2,
+                          boxShadow: `0 15px 40px ${restaurantSettings.primaryColor}60`,
+                          transition: { type: "spring", stiffness: 400, damping: 10 }
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                        className="w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-3 text-lg relative overflow-hidden touch-target haptic-press"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`,
+                          boxShadow: `0 10px 30px ${restaurantSettings.primaryColor}40`,
+                          minHeight: '52px'
+                        }}
+                      >
+                        {/* Shimmer effect on hover */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                          initial={{ x: '-100%' }}
+                          whileHover={{ 
+                            x: '100%',
+                            transition: { duration: 0.6, ease: "easeInOut" }
+                          }}
+                        />
+                        <ShoppingBag className="w-6 h-6 relative z-10" />
+                        <span className="relative z-10">Order Now</span>
+                      </motion.button>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <motion.button
+                          whileHover={{ 
+                            scale: 1.02,
+                            transition: { type: "spring", stiffness: 400, damping: 10 }
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`py-3 rounded-xl font-bold border-2 transition-colors relative overflow-hidden touch-target haptic-press ${darkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-800' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                          style={{ minHeight: '48px' }}
+                        >
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-200/20 to-transparent"
+                            initial={{ x: '-100%' }}
+                            whileHover={{ 
+                              x: '100%',
+                              transition: { duration: 0.6, ease: "easeInOut" }
+                            }}
+                          />
+                          <span className="relative z-10">Share</span>
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ 
+                            scale: 1.02,
+                            transition: { type: "spring", stiffness: 400, damping: 10 }
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`py-3 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 relative overflow-hidden touch-target haptic-press ${darkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-800' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                          style={{ minHeight: '48px' }}
+                        >
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-200/20 to-transparent"
+                            initial={{ x: '-100%' }}
+                            whileHover={{ 
+                              x: '100%',
+                              transition: { duration: 0.6, ease: "easeInOut" }
+                            }}
+                          />
+                          <motion.div
+                            whileHover={{ 
+                              rotate: [0, -10, 10, -10, 0],
+                              transition: { duration: 0.5 }
+                            }}
+                            className="relative z-10"
+                          >
+                            <Star className="w-5 h-5" />
+                          </motion.div>
+                          <span className="relative z-10">Favorite</span>
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Bottom Navigation Bar - Better Reachability */}
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.3 }}
+          className={`fixed bottom-0 left-0 right-0 z-40 md:hidden backdrop-blur-md border-t ${
+            darkMode 
+              ? 'bg-gray-900/90 border-gray-700' 
+              : 'bg-white/90 border-gray-200'
+          }`}
+          style={{
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <div className="flex items-center justify-around px-2 py-3">
+            {/* Home/All Items */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setSelectedCategory('all')}
+              className="flex flex-col items-center gap-1 min-w-[44px] min-h-[44px] justify-center px-3"
+            >
+              <motion.div
+                animate={{
+                  scale: selectedCategory === 'all' ? 1.1 : 1,
+                  color: selectedCategory === 'all' 
+                    ? restaurantSettings.primaryColor 
+                    : (darkMode ? '#9ca3af' : '#6b7280')
+                }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              >
+                <Menu className="w-6 h-6" />
+              </motion.div>
+              <motion.span 
+                className={`text-xs font-semibold`}
+                animate={{
+                  color: selectedCategory === 'all' 
+                    ? restaurantSettings.primaryColor 
+                    : (darkMode ? '#9ca3af' : '#6b7280')
+                }}
+              >
+                All
+              </motion.span>
+              {selectedCategory === 'all' && (
+                <motion.div
+                  layoutId="mobile-nav-indicator"
+                  className="absolute -top-1 w-12 h-1 rounded-full"
+                  style={{ backgroundColor: restaurantSettings.primaryColor }}
+                />
+              )}
+            </motion.button>
+
+            {/* Categories (First 3) */}
+            {categories.slice(0, 3).map((category) => (
+              <motion.button
+                key={category.id}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setSelectedCategory(category.id)}
+                className="flex flex-col items-center gap-1 min-w-[44px] min-h-[44px] justify-center px-3 relative"
+              >
+                <motion.div
+                  animate={{
+                    scale: selectedCategory === category.id ? 1.1 : 1,
+                    color: selectedCategory === category.id 
+                      ? restaurantSettings.primaryColor 
+                      : (darkMode ? '#9ca3af' : '#6b7280')
+                  }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                >
+                  <ShoppingBag className="w-6 h-6" />
+                </motion.div>
+                <motion.span 
+                  className={`text-xs font-semibold truncate max-w-[60px]`}
+                  animate={{
+                    color: selectedCategory === category.id 
+                      ? restaurantSettings.primaryColor 
+                      : (darkMode ? '#9ca3af' : '#6b7280')
+                  }}
+                >
+                  {getLocalizedText(category, 'name').substring(0, 8)}
+                </motion.span>
+                {selectedCategory === category.id && (
+                  <motion.div
+                    layoutId="mobile-nav-indicator"
+                    className="absolute -top-1 w-12 h-1 rounded-full"
+                    style={{ backgroundColor: restaurantSettings.primaryColor }}
+                  />
+                )}
+              </motion.button>
+            ))}
+
+            {/* More Categories Button */}
+            {categories.length > 3 && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setShowMobileNav(!showMobileNav)}
+                className="flex flex-col items-center gap-1 min-w-[44px] min-h-[44px] justify-center px-3"
+              >
+                <motion.div
+                  animate={{
+                    rotate: showMobileNav ? 180 : 0,
+                    color: darkMode ? '#9ca3af' : '#6b7280'
+                  }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </motion.div>
+                <span className={`text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  More
+                </span>
+              </motion.button>
+            )}
+          </div>
+
+          {/* Expanded Categories Menu */}
+          <AnimatePresence>
+            {showMobileNav && categories.length > 3 && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className={`overflow-hidden border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+              >
+                <div className="grid grid-cols-3 gap-2 p-4">
+                  {categories.slice(3).map((category, index) => (
+                    <motion.button
+                      key={category.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ 
+                        opacity: 1, 
+                        y: 0,
+                        transition: {
+                          delay: index * 0.05,
+                          type: "spring",
+                          stiffness: 300
+                        }
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setSelectedCategory(category.id);
+                        setShowMobileNav(false);
+                      }}
+                      className={`min-h-[44px] px-3 py-2 rounded-xl font-semibold text-sm transition-all ${
+                        selectedCategory === category.id
+                          ? 'text-white'
+                          : darkMode
+                            ? 'bg-gray-800 text-gray-200'
+                            : 'bg-gray-100 text-gray-700'
+                      }`}
+                      style={selectedCategory === category.id ? {
+                        background: `linear-gradient(135deg, ${restaurantSettings.primaryColor}, ${restaurantSettings.primaryColor}dd)`
+                      } : {}}
+                    >
+                      {getLocalizedText(category, 'name')}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Footer */}
         <motion.div 
@@ -542,7 +1544,7 @@ export default function Home() {
                 className={`font-semibold`}
                 style={{ color: darkMode ? restaurantSettings.primaryColor : restaurantSettings.primaryColor }}
               >
-                Al-Khwarizmi
+                Alkhwarizm
               </span>
             </motion.p>
 
@@ -563,7 +1565,7 @@ export default function Home() {
               transition={{ delay: 0.9 }}
               className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-400'} pt-2`}
             >
-              © {new Date().getFullYear()} Al-Khwarizmi. All rights reserved.
+              © {new Date().getFullYear()} . Alkhwarizm All rights reserved.
             </motion.p>
           </div>
         </motion.div>

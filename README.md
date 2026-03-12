@@ -1,907 +1,640 @@
-# Restaurant Management System 🍽️
+# 🍽️ Restaurant Management System
 
-A comprehensive full-stack restaurant management platform with **enterprise-grade security**, multi-language support (5 languages), featuring admin dashboard, cashier POS system, kitchen display system, and customer menu with QR code ordering capabilities. Built for modern restaurants to streamline operations from order taking to kitchen preparation.
+> A comprehensive full-stack restaurant management platform with enterprise-grade security, stunning UI/UX animations, and multi-language support. Features an intuitive admin dashboard, dynamic customer menu with QR code access, and complete restaurant branding customization.
 
-## 🔒 Security First
-
-This system implements **production-ready security** with:
-- ✅ JWT authentication with refresh tokens
-- ✅ HttpOnly cookies (XSS protection)
-- ✅ Account lockout after failed attempts
-- ✅ Rate limiting (brute force protection)
-- ✅ Comprehensive audit logging
-- ✅ Role-based access control (RBAC)
-- ✅ Password policy enforcement
-- ✅ SQL injection protection
-- ✅ CORS whitelist configuration
-- ✅ Security headers (Helmet)
-
-See [Security Features](#-security-features) for complete details.
-
-## 🌟 Key Features
-
-### 👨‍💼 Admin Dashboard
-- **Product Management**: Create, update, delete products with multi-language support
-- **Category Management**: Organize menu items into categories (5 languages)
-- **Image Upload**: Upload and manage product images
-- **QR Code Generator**: Create unique QR codes for each table
-- **Settings & User Management**: 
-  - Update admin credentials (email, password, name)
-  - Create, edit, and delete cashier accounts
-  - Create, edit, and delete kitchen staff accounts
-  - Centralized user management interface
-- **Order Analytics**: View order statistics, revenue tracking, and status distribution
-- **Menu Control**: Toggle product visibility in customer menu
-- **Multi-language Support**: English, Afaan Oromo, Amharic, Somali, Arabic
-- **Modern UI**: Animated interface with Framer Motion and Lucide icons
-
-### 💰 Cashier POS System
-- **Order Creation**: Quick order entry with product selection
-- **Table Management**: Assign orders to specific table numbers
-- **Order Tracking**: Monitor order status in real-time
-- **Priority Setting**: Mark orders as low, normal, or high priority
-- **Order Notes**: Add special instructions or customer requests
-- **Order History**: View all orders with filtering by status
-- **Total Calculation**: Automatic price calculation with itemized breakdown
-
-### 👨‍🍳 Kitchen Display System
-- **Real-time Orders**: Instant notification of new orders
-- **Order Queue**: View all pending and preparing orders
-- **Status Management**: Update order status (pending → preparing → ready → completed)
-- **Order Acceptance**: Accept orders to start preparation
-- **Priority Indicators**: Visual priority markers (low/normal/high)
-- **Time Tracking**: Track acceptance and completion timestamps
-- **Order Details**: View full order items, quantities, and special notes
-
-### 📱 Customer Menu (QR Code Access)
-- **Multi-language Display**: Switch between 5 supported languages
-- **Category Browsing**: Filter products by category
-- **Product Gallery**: View product images and descriptions
-- **Price Display**: Clear pricing information
-- **Responsive Design**: Mobile-optimized for customer devices
-- **QR Code Access**: Scan table QR code to access menu
-
-## 🛠️ Tech Stack
-
-### Backend
-- **Runtime**: Node.js with Express.js
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: JWT (JSON Web Tokens)
-- **File Upload**: Multer
-- **QR Code**: qrcode library
-- **Security**: bcryptjs for password hashing
-
-### Frontend
-- **Framework**: React 19.2.0
-- **Build Tool**: Vite 8.0
-- **Styling**: Tailwind CSS 4.2
-- **Routing**: React Router DOM 7.13
-- **HTTP Client**: Axios
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-
-## 📋 Prerequisites
-
-- Node.js (v18 or higher)
-- PostgreSQL database
-- npm or yarn package manager
-
-## 🚀 Installation & Setup
-
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd <project-directory>
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-
-# Install dependencies
-npm install
-
-# Configure environment variables
-# Create a .env file with:
-DATABASE_URL="postgresql://user:password@localhost:5432/restaurant_db"
-JWT_SECRET="your-strong-secret-key-min-32-chars"
-JWT_REFRESH_SECRET="your-different-refresh-secret-min-32-chars"
-NODE_ENV="development"
-CORS_ORIGIN="http://localhost:5173,http://localhost:5174"
-PORT=3001
-
-# Run Prisma migrations
-npx prisma migrate dev
-
-# Seed the database with secure passwords
-node seed.js
-
-# Start development server
-npm run dev
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Create .env file with:
-VITE_API_URL=http://localhost:3001/api
-
-# Start development server
-npm run dev
-```
-
-The frontend will run on `http://localhost:5173` (or 5174) and backend on `http://localhost:3001`
-
-### 4. Access the Application
-
-**Admin Dashboard:**
-- URL: http://localhost:5173/admin/login
-- Email: `ibrahimkamil362@gmail.com`
-- Password: `Admin@123`
-
-**Cashier POS:**
-- URL: http://localhost:5173/cashier/login
-- Username: `cashier`
-- Password: `Cashier@123`
-
-**Kitchen Display:**
-- URL: http://localhost:5173/kitchen/login
-- Username: `kitchen`
-- Password: `Kitchen@123`
-
-**⚠️ Important:** Change these credentials before deploying to production!
-
-## 📁 Project Structure
-
-```
-├── backend/
-│   ├── prisma/
-│   │   ├── migrations/        # Database migrations
-│   │   └── schema.prisma      # Database schema
-│   ├── src/
-│   │   ├── config/            # Database configuration
-│   │   ├── controllers/       # Business logic
-│   │   ├── middleware/        # Auth & upload middleware
-│   │   └── routes/            # API endpoints
-│   ├── uploads/               # Product images
-│   └── seed.js                # Database seeding
-│
-├── frontend/
-│   └── src/
-│       ├── pages/             # React pages/components
-│       │   ├── Admin.jsx
-│       │   ├── AdminLogin.jsx
-│       │   ├── Cashier.jsx
-│       │   ├── CashierLogin.jsx
-│       │   ├── Kitchen.jsx
-│       │   ├── KitchenLogin.jsx
-│       │   └── Home.jsx
-│       └── App.jsx            # Main app component
-```
-
-## 🔌 API Endpoints
-
-### Authentication Routes (`/api/auth`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/admin/login` | Admin authentication | No |
-| POST | `/cashier/login` | Cashier authentication | No |
-| POST | `/kitchen/login` | Kitchen authentication | No |
-| POST | `/refresh` | Refresh access token | Refresh Token |
-| POST | `/logout` | Logout and revoke tokens | Yes |
-| GET | `/profile` | Get current user profile | Yes |
-| GET | `/sessions` | List active sessions | Yes |
-| DELETE | `/sessions/:id` | Revoke specific session | Yes |
-| POST | `/sessions/revoke-all` | Revoke all sessions | Yes |
-
-**Login Request Body (Admin):**
-```json
-{
-  "email": "admin@example.com",
-  "password": "Admin@123"
-}
-```
-
-**Login Request Body (Cashier/Kitchen):**
-```json
-{
-  "username": "cashier",
-  "password": "Cashier@123"
-}
-```
-
-**Login Response:**
-```json
-{
-  "success": true,
-  "user": {
-    "id": 1,
-    "email": "admin@example.com",
-    "name": "Admin User",
-    "role": "admin"
-  }
-}
-```
-*Note: Tokens are set in HttpOnly cookies automatically*
-
-### Admin Routes (`/api/admin`)
-*Legacy endpoint - use `/api/auth/admin/login` instead*
-
-### Cashier Routes (`/api/cashier`)
-*Note: Use `/api/auth/cashier/login` for authentication*
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/profile` | Get cashier profile | Cashier |
-| GET | `/orders` | List cashier's orders | Cashier |
-| GET | `/stats/today` | Today's statistics | Cashier |
-
-### Kitchen Routes (`/api/kitchen`)
-*Note: Use `/api/auth/kitchen/login` for authentication*
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/profile` | Get kitchen profile | Kitchen |
-| GET | `/orders` | List kitchen orders | Kitchen |
-| PATCH | `/orders/:id/status` | Update order status | Kitchen |
-| GET | `/stats/today` | Today's statistics | Kitchen |
-
-### Settings Routes (`/api/settings`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| PUT | `/admin` | Update admin credentials | Admin |
-| GET | `/cashiers` | List all cashiers | Admin |
-| POST | `/cashiers` | Create cashier account | Admin |
-| PUT | `/cashiers/:id` | Update cashier account | Admin |
-| DELETE | `/cashiers/:id` | Delete cashier account | Admin |
-| GET | `/kitchens` | List all kitchen users | Admin |
-| POST | `/kitchens` | Create kitchen account | Admin |
-| PUT | `/kitchens/:id` | Update kitchen account | Admin |
-| DELETE | `/kitchens/:id` | Delete kitchen account | Admin |
-
-**Request Body (Update Admin):**
-```json
-{
-  "email": "admin@example.com",
-  "password": "newpassword123",
-  "name": "Admin Name"
-}
-```
-
-**Request Body (Create/Update Cashier):**
-```json
-{
-  "username": "cashier1",
-  "password": "password123",
-  "name": "John Doe"
-}
-```
-
-**Request Body (Create/Update Kitchen):**
-```json
-{
-  "username": "kitchen1",
-  "password": "password123",
-  "name": "Chef Name"
-}
-```
-
-### Category Routes (`/api/categories`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | List all categories | No |
-| POST | `/` | Create category | Admin |
-| PUT | `/:id` | Update category | Admin |
-| DELETE | `/:id` | Delete category | Admin |
-
-**Request Body (Create/Update):**
-```json
-{
-  "name": "Beverages",
-  "nameOr": "Dhugaatii",
-  "nameAm": "መጠጦች",
-  "nameSo": "Cabitaanno",
-  "nameAr": "مشروبات"
-}
-```
-
-### Product Routes (`/api/products`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | List all products | No |
-| GET | `/menu` | Get products visible in menu | No |
-| POST | `/` | Create product | Admin |
-| PUT | `/:id` | Update product | Admin |
-| PUT | `/:id/toggle-menu` | Toggle menu visibility | Admin |
-| DELETE | `/:id` | Delete product | Admin |
-
-**Request Body (Create/Update):**
-```json
-{
-  "name": "Coffee",
-  "nameOr": "Buna",
-  "nameAm": "ቡና",
-  "nameSo": "Qaxwe",
-  "nameAr": "قهوة",
-  "description": "Fresh brewed coffee",
-  "descriptionOr": "Buna haaraa",
-  "descriptionAm": "ትኩስ የተጠበሰ ቡና",
-  "descriptionSo": "Qaxwe cusub",
-  "descriptionAr": "قهوة طازجة",
-  "price": 25.00,
-  "image": "/uploads/coffee.jpg",
-  "categoryId": 1,
-  "showInMenu": true
-}
-```
-
-### Order Routes (`/api/orders`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | List all orders (with status filter) | Cashier/Kitchen |
-| GET | `/:id` | Get order by ID | Cashier/Kitchen |
-| GET | `/stats` | Get order statistics | Admin |
-| POST | `/` | Create new order | Cashier |
-| PUT | `/:id/status` | Update order status | Kitchen |
-| PUT | `/:id/priority` | Update order priority | Cashier |
-| DELETE | `/:id` | Delete order | Admin |
-
-**Request Body (Create Order):**
-```json
-{
-  "tableNumber": "T-05",
-  "items": [
-    {
-      "productId": 1,
-      "quantity": 2,
-      "price": 25.00
-    }
-  ],
-  "notes": "No sugar",
-  "priority": "normal"
-}
-```
-
-**Order Status Values:** `pending`, `preparing`, `ready`, `completed`, `cancelled`
-
-**Priority Values:** `low`, `normal`, `high`
-
-### QR Code Routes (`/api/qrcodes`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | List all QR codes | Admin |
-| POST | `/` | Generate QR code | Admin |
-| DELETE | `/:id` | Delete QR code | Admin |
-
-**Request Body (Generate QR Code):**
-```json
-{
-  "name": "Table 5",
-  "url": "http://localhost:5173/?table=5",
-  "description": "QR code for table 5"
-}
-```
-
-### Upload Routes (`/api/upload`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/` | Upload product image | Admin |
-
-**Request:** Multipart form-data with `image` field
-
-## 🗄️ Database Schema
-
-### Enhanced Security Models
-
-#### User Models (with Security Fields)
-- **Admin**: System administrators
-  - Security fields: `isActive`, `failedLoginCount`, `lockedUntil`, `lastLoginAt`, `lastLoginIp`, `passwordChangedAt`
-- **Cashier**: POS operators
-  - Security fields: Same as Admin
-- **Kitchen**: Kitchen staff
-  - Security fields: Same as Admin
-
-#### Security Tables
-- **RefreshToken**: Stores refresh tokens with expiry, revocation status, IP, and user agent
-- **AuditLog**: Comprehensive audit trail of all system actions
-- **PasswordResetToken**: Password reset functionality (future use)
-
-#### Business Models
-- **Category**: Product categories (multi-language)
-- **Product**: Menu items (multi-language)
-- **Order**: Customer orders with status tracking
-- **OrderItem**: Individual items in orders
-- **QRCode**: Generated QR codes for tables
-
-### Multi-Language Support
-Categories and Products support 5 languages:
-- English (default)
-- Afaan Oromo (`nameOr`, `descriptionOr`)
-- Amharic (`nameAm`, `descriptionAm`)
-- Somali (`nameSo`, `descriptionSo`)
-- Arabic (`nameAr`, `descriptionAr`)
-
-## 🔐 Authentication
-
-The system uses **JWT-based authentication with refresh tokens** and three user roles:
-
-### Authentication Flow
-1. User logs in with credentials
-2. Backend validates and generates:
-   - Access token (15 minutes) - stored in HttpOnly cookie
-   - Refresh token (7 days) - stored in HttpOnly cookie
-3. Access token used for API requests
-4. When access token expires, refresh token automatically generates new tokens
-5. Logout revokes all tokens
-
-### User Roles & Permissions
-
-#### Admin
-- Full system access
-- User management (create/edit/delete cashiers and kitchen staff)
-- Product and category management
-- QR code generation
-- Order monitoring
-- System settings
-- Audit log access
-
-#### Cashier
-- Create and manage orders
-- View products and categories
-- View own order history
-- Access POS system
-
-#### Kitchen
-- View incoming orders
-- Update order status (preparing, ready, completed)
-- View order queue
-- Access kitchen display system
-
-### Security Features
-- **Account Lockout**: 5 failed attempts → 30-minute lockout
-- **Session Management**: View and revoke active sessions
-- **Audit Logging**: All actions tracked with IP and timestamp
-- **Token Rotation**: Refresh tokens rotate on each use
-- **Role Validation**: Strict role-based access control
-
-## 📱 User Flows
-
-### Admin Flow
-1. Login at `/admin-login` with modern animated interface
-2. Access comprehensive dashboard with statistics
-3. Manage categories and products with multi-language support
-4. Generate and print QR codes for tables
-5. Control menu visibility for products
-6. **Settings Tab**: Manage all user accounts
-   - Update admin credentials
-   - Create/edit/delete cashier accounts
-   - Create/edit/delete kitchen staff accounts
-7. Monitor orders and system activity
-
-### Cashier Flow
-1. Login at `/cashier-login`
-2. Create orders for customers
-3. Assign table numbers
-4. Track order status
-
-### Kitchen Flow
-1. Login at `/kitchen-login`
-2. View incoming orders
-3. Accept and prepare orders
-4. Mark orders as ready/completed
-
-### Customer Flow
-1. Scan QR code at table
-2. Browse menu in preferred language
-3. View products by category
-4. Place order (via cashier)
-
-## 🔧 Development Scripts
-
-### Backend
-```bash
-npm run dev      # Start with nodemon (auto-reload)
-npm start        # Production start
-```
-
-### Frontend
-```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run preview  # Preview production build
-npm run lint     # Run ESLint
-```
-
-## 🌐 Environment Variables
-
-### Backend (.env)
-```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/restaurant_db
-
-# JWT Secrets (MUST be different and strong - min 32 characters)
-JWT_SECRET=your-super-secret-jwt-key-min-32-chars-random-string
-JWT_REFRESH_SECRET=your-different-refresh-secret-min-32-chars-random
-
-# Environment
-NODE_ENV=development  # Use 'production' in production
-
-# CORS (comma-separated origins, no wildcards in production)
-CORS_ORIGIN=http://localhost:5173,http://localhost:5174
-
-# Server
-PORT=3001
-```
-
-**Generate Strong Secrets:**
-```bash
-# Generate JWT_SECRET
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-
-# Generate JWT_REFRESH_SECRET (must be different)
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-### Frontend (.env)
-```env
-VITE_API_URL=http://localhost:3001/api
-```
-
-**Production Environment:**
-```env
-# Backend
-NODE_ENV=production
-CORS_ORIGIN=https://yourdomain.com
-DATABASE_URL=postgresql://user:password@prod-host:5432/restaurant_db?ssl=true
-
-# Frontend
-VITE_API_URL=https://api.yourdomain.com/api
-```
-
-## 🎯 Application Routes
-
-### Frontend Routes
-| Route | Component | Description | Access |
-|-------|-----------|-------------|--------|
-| `/` | Home | Customer menu with QR code access | Public |
-| `/admin/login` | AdminLogin | Modern animated admin login | Public |
-| `/admin` | Admin | Admin dashboard with Settings tab | Admin only |
-| `/cashier/login` | CashierLogin | Modern animated cashier login | Public |
-| `/cashier` | Cashier | Cashier POS system | Cashier only |
-| `/kitchen/login` | KitchenLogin | Modern animated kitchen login | Public |
-| `/kitchen` | Kitchen | Kitchen display system | Kitchen only |
-
-### Admin Dashboard Tabs
-| Tab | Description |
-|-----|-------------|
-| Dashboard | Statistics overview with quick actions |
-| Categories | Multi-language category management |
-| Products | Product CRUD with image upload |
-| Digital Menu | Toggle product visibility in customer menu |
-| QR Codes | Generate, view, print QR codes |
-| **Settings** | User management (Admin, Cashiers, Kitchen) |
-
-## 🔑 Default Credentials (After Seeding)
-
-```
-Admin:
-Email: ibrahimkamil362@gmail.com
-Password: Admin@123
-Dashboard: http://localhost:5173/admin
-
-Cashier:
-Username: cashier
-Password: Cashier@123
-Dashboard: http://localhost:5173/cashier
-
-Kitchen:
-Username: kitchen
-Password: Kitchen@123
-Dashboard: http://localhost:5173/kitchen
-```
-
-**⚠️ CRITICAL SECURITY NOTICE:**
-1. **Change these passwords immediately** after first login
-2. Use strong, unique passwords (min 8 chars with uppercase, lowercase, number, special char)
-3. Never commit credentials to version control
-4. Use environment variables for sensitive data
-5. Enable 2FA in production (future enhancement)
-
-**Password Requirements:**
-- Minimum 8 characters
-- At least 1 uppercase letter
-- At least 1 lowercase letter
-- At least 1 number
-- At least 1 special character (!@#$%^&*)
-
-## 📊 Order Workflow
-
-```
-1. Customer scans QR code → Views menu
-2. Cashier creates order → Status: PENDING
-3. Kitchen receives order → Accepts → Status: PREPARING
-4. Kitchen completes cooking → Status: READY
-5. Order delivered → Status: COMPLETED
-```
-
-**Status Transitions:**
-- `pending` → Order created by cashier
-- `preparing` → Kitchen accepted and cooking (tracks `acceptedAt`)
-- `ready` → Food ready for pickup/delivery
-- `completed` → Order delivered to customer (tracks `completedAt`)
-- `cancelled` → Order cancelled
-
-## 🌍 Multi-Language Implementation
-
-The platform supports 5 languages with database-level storage:
-
-| Language | Code | Fields |
-|----------|------|--------|
-| English | (default) | `name`, `description` |
-| Afaan Oromo | `or` | `nameOr`, `descriptionOr` |
-| Amharic | `am` | `nameAm`, `descriptionAm` |
-| Somali | `so` | `nameSo`, `descriptionSo` |
-| Arabic | `ar` | `nameAr`, `descriptionAr` |
-
-**Supported Models:**
-- Categories (name translations)
-- Products (name and description translations)
-
-## 🔒 Security Features
-
-### Production-Ready Security Implementation
-
-This system implements **enterprise-grade security** with comprehensive protection against common vulnerabilities:
-
-#### Authentication & Authorization
-- **JWT with Refresh Tokens**: Short-lived access tokens (15 minutes) + long-lived refresh tokens (7 days)
-- **HttpOnly Cookies**: Prevents XSS attacks by storing tokens in secure, HttpOnly cookies
-- **Token Rotation**: Automatic refresh token rotation on each refresh for enhanced security
-- **Role-Based Access Control (RBAC)**: Strict role separation (Admin, Cashier, Kitchen)
-- **Session Management**: Track and revoke active sessions, view login history
-
-#### Password Security
-- **Strong Hashing**: bcryptjs with 12 salt rounds (production-grade)
-- **Password Policy**: Enforced complexity requirements:
-  - Minimum 8 characters
-  - At least 1 uppercase letter
-  - At least 1 lowercase letter
-  - At least 1 number
-  - At least 1 special character
-- **Account Lockout**: Automatic lockout after 5 failed login attempts (30-minute duration)
-- **Failed Login Tracking**: Monitor and log all authentication attempts
-
-#### API Security
-- **Rate Limiting**: 
-  - Global: 100 requests per 15 minutes
-  - Auth endpoints: 5 requests per 15 minutes
-  - API endpoints: 30 requests per minute
-- **Security Headers**: Helmet middleware with CSP, HSTS, X-Frame-Options, etc.
-- **CORS Whitelist**: Strict origin validation (no wildcards in production)
-- **Input Sanitization**: XSS prevention through input cleaning
-- **SQL Injection Protection**: Prisma ORM with parameterized queries
-- **Content-Type Validation**: Ensures proper request formats
-
-#### Audit & Monitoring
-- **Comprehensive Audit Logging**: 
-  - All login attempts (success/failure)
-  - Admin CRUD operations
-  - Order status changes
-  - Unauthorized access attempts
-  - IP address and user agent tracking
-- **Security Events**: Account lockouts, token refresh, password changes
-- **Audit Trail**: Complete history of all sensitive actions
-
-#### Additional Security Measures
-- **Protected Routes**: Middleware authentication on all sensitive endpoints
-- **Token Blacklist**: Revoked tokens tracked in database
-- **Secure Cookies**: SameSite=Strict, Secure flag in production
-- **Password Visibility Toggle**: Secure password input with show/hide option
-- **Unique Constraints**: Username/email uniqueness enforced at database level
-- **Account Status**: Active/inactive user management
-
-### Security Documentation
-
-For detailed security information, see:
-- `SECURITY_ARCHITECTURE.md` - Complete security architecture
-- `PRODUCTION_SECURITY_CHECKLIST.md` - Pre-deployment security checklist
-- `IMPLEMENTATION_GUIDE.md` - Security implementation guide
-- `TEST_SECURITY.md` - Security testing procedures
-
-## 📈 Order Statistics API
-
-The `/api/orders/stats` endpoint provides:
-- Total orders count
-- Orders by status (pending, preparing, ready, completed, cancelled)
-- Total revenue from completed orders
-- Real-time analytics for admin dashboard
-
-## 📝 Additional Notes
-
-- Product images stored in `backend/uploads/` directory
-- Images served statically via Express
-- QR codes generated with base64 data URLs
-- Order timestamps tracked: `createdAt`, `acceptedAt`, `completedAt`
-- Cascade delete: Deleting category removes all products
-- Cascade delete: Deleting order removes all order items
-- Menu visibility toggle: Control which products appear in customer menu
-- Priority system: Visual indicators for urgent orders
-- **Modern Login Pages**: All login pages feature animated designs with:
-  - Framer Motion animations
-  - Lucide React icons
-  - Gradient backgrounds
-  - Password visibility toggles
-  - Loading states
-  - Unique color themes per role (Indigo/Admin, Emerald/Cashier, Orange/Kitchen)
-- **Settings Management**: Centralized user account management in admin dashboard
-- **Password Updates**: Optional password fields - leave empty to keep current password
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-**Database Connection Error**
-```bash
-# Check PostgreSQL is running
-# Verify DATABASE_URL in .env
-# Regenerate Prisma client
-npx prisma generate
-```
-
-**Port Already in Use**
-```bash
-# Backend (3001)
-# Frontend (5173)
-# Kill process or change PORT in .env
-```
-
-**Prisma Migration Issues**
-```bash
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
-
-# Create new migration
-npx prisma migrate dev --name your_migration_name
-```
-
-**Image Upload Not Working**
-- Ensure `backend/uploads/` directory exists
-- Check file permissions
-- Verify Multer configuration
-
-**Authentication Errors**
-- Check JWT_SECRET is set in .env
-- Verify token is included in request headers
-- Check token expiration
-
-**CORS Issues**
-- Verify frontend URL in CORS configuration
-- Check API endpoint URLs in frontend
-
-For backend restart instructions, see `RESTART_BACKEND.md`
-
-## 🚀 Deployment Considerations
-
-### Security Checklist (CRITICAL)
-Before deploying to production, complete the security checklist in `PRODUCTION_SECURITY_CHECKLIST.md`:
-
-- [ ] Change all default passwords
-- [ ] Generate strong JWT secrets (32+ characters, random)
-- [ ] Set `NODE_ENV=production`
-- [ ] Configure HTTPS/SSL certificates
-- [ ] Update CORS_ORIGIN with production URLs (no wildcards)
-- [ ] Enable secure cookie flags
-- [ ] Configure database SSL connection
-- [ ] Set up monitoring and alerting
-- [ ] Configure automated backups
-- [ ] Run `npm audit` and fix vulnerabilities
-- [ ] Test all security features
-- [ ] Review audit logs
-- [ ] Set up rate limiting at infrastructure level
-- [ ] Configure DDoS protection
-- [ ] Set up log aggregation
-
-### Backend
-- Set `NODE_ENV=production`
-- Use process manager (PM2, systemd)
-- Configure PostgreSQL for production with SSL
-- Set strong, unique JWT secrets
-- Enable HTTPS with valid SSL certificate
-- Configure proper CORS origins (no wildcards)
-- Set up database backups and replication
-- Configure monitoring (error tracking, uptime, performance)
-- Set up log rotation and retention
-- Use environment variables for all secrets
-- Configure firewall rules
-- Enable rate limiting at infrastructure level
-
-### Frontend
-- Build for production: `npm run build`
-- Serve with Nginx or similar web server
-- Update API URLs for production
-- Enable HTTPS with valid SSL certificate
-- Configure CDN for static assets
-- Enable gzip/brotli compression
-- Set proper cache headers
-- Configure CSP headers
-
-### Database
-- Regular automated backups
-- Connection pooling configuration
-- Index optimization for performance
-- Monitor query performance
-- Set up replication for high availability
-- Enable SSL/TLS connections
-- Restrict database access by IP
-- Regular security updates
-
-### Monitoring & Maintenance
-- Set up error tracking (Sentry, etc.)
-- Configure uptime monitoring
-- Set up performance monitoring (APM)
-- Monitor audit logs for suspicious activity
-- Set up alerts for:
-  - Failed login attempts
-  - Account lockouts
-  - Rate limit violations
-  - Server errors
-  - Database issues
-- Regular security audits
-- Keep dependencies updated
-- Review and rotate JWT secrets quarterly
-
-## 🔄 Future Enhancements
-
-### Security
-- Two-factor authentication (2FA)
-- Biometric authentication
-- Password reset via email
-- Session timeout configuration
-- IP whitelisting for admin access
-- Advanced threat detection
-- Security incident response automation
-
-### Features
-- Real-time WebSocket updates for orders
-- Payment gateway integration
-- Customer order history and loyalty program
-- Inventory management with low-stock alerts
-- Advanced sales reports and analytics
-- Email/SMS notifications for orders
-- Table reservation system
-- Mobile apps (iOS/Android)
-- Print receipt functionality
-- Platform branding customization (logo, name, colors)
-- Multi-location support
-- Staff scheduling and time tracking
-- Customer feedback and ratings
-- Integration with delivery platforms
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
-
-## 📄 License
-
-This project is for educational/commercial use.
-
-## 📞 Support
-
-For issues and questions:
-- Check the troubleshooting section
-- Review API documentation
-- Check database schema
-- Verify environment variables
+[![React](https://img.shields.io/badge/React-19.2.0-blue.svg)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Latest-blue.svg)](https://www.postgresql.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-**Built with ❤️ for modern restaurants**
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [UI/UX Design System](#-uiux-design-system)
+- [Project Structure](#-project-structure)
+- [Installation](#-installation)
+- [API Documentation](#-api-documentation)
+- [Database Schema](#-database-schema)
+- [Security Features](#-security-features)
+- [Multi-Language Support](#-multi-language-support)
+- [User Flows](#-user-flows)
+- [Deployment](#-deployment)
+- [Troubleshooting](#-troubleshooting)
+
+---
+
+## 🌟 Overview
+
+This Restaurant Management System is a modern, production-ready platform designed for restaurants to manage their operations efficiently while providing customers with an exceptional digital menu experience. Built with cutting-edge technologies and best practices, it combines powerful backend functionality with a beautiful, animated frontend.
+
+### What Makes This Special?
+
+- **Enterprise Security**: JWT authentication, refresh tokens, account lockout, audit logging
+- **Stunning UI/UX**: Framer Motion animations, glassmorphism design, dark/light modes
+- **Multi-Language**: Support for 5 languages (English, Afaan Oromo, Amharic, Somali, Arabic)
+- **Fully Customizable**: Restaurant branding, colors, logo, and complete theme control
+- **QR Code Integration**: Generate QR codes for tables with instant menu access
+- **Responsive Design**: Optimized for mobile, tablet, and desktop devices
+- **Production Ready**: Rate limiting, security headers, CORS, input sanitization
+
+
+---
+
+## ✨ Key Features
+
+### 🎨 Modern UI/UX Design
+
+#### Visual Design
+- **Glassmorphism Effects**: Modern backdrop blur with subtle borders and transparency
+- **Smooth Animations**: 60fps animations powered by Framer Motion
+- **Dark/Light Mode**: Seamless theme switching with persistent preferences
+- **Gradient Designs**: Beautiful multi-color gradients throughout the interface
+- **Responsive Layout**: Mobile-first design optimized for all screen sizes
+- **Interactive Elements**: Hover effects, scale animations, and micro-interactions
+- **Icon System**: 50+ Lucide React icons for intuitive navigation
+- **Dynamic Theming**: Customizable primary colors that affect the entire app
+
+#### Animation System
+- Page transitions with fade and slide effects
+- Staggered card entrance animations
+- Button scale effects on hover and tap
+- Modal spring-based animations
+- Loading spinners with smooth rotation
+- Smooth color transitions between themes
+- Image carousel with swipe gestures
+
+#### Design Patterns
+- Glass morphism cards with backdrop blur
+- Elevated shadows for depth perception
+- Rounded corners (16px-32px) for modern feel
+- Consistent spacing using Tailwind scale
+- Color-coded status indicators
+- Badge system for categories and counts
+- Empty states with friendly messages
+
+
+### 👨‍💼 Admin Dashboard
+
+#### Dashboard Tab
+- **Real-time Statistics**: Animated cards showing key metrics
+  - Total products count with trending indicators
+  - Category count with visual icons
+  - Menu visibility tracking
+  - QR code generation statistics
+- **Quick Actions**: One-click access to common tasks
+- **Welcome Banner**: Personalized greeting with gradient design
+- **Visual Analytics**: Color-coded statistics with icon badges
+
+#### Category Management
+- **Multi-language Support**: Create categories in 5 languages
+- **CRUD Operations**: Full create, read, update, delete functionality
+- **Visual Cards**: Category cards with hover effects and shadows
+- **Instant Feedback**: Success/error toast notifications
+- **Cascade Delete**: Automatic cleanup of related products
+
+#### Product Management
+- **Multi-language Product Info**: Names and descriptions in 5 languages
+- **Multiple Image Upload**: Support for up to 10 images per product
+- **Image Gallery**: Thumbnail preview with individual remove functionality
+- **Image Counter**: Visual indicator showing number of images
+- **Price Management**: Decimal precision pricing with validation
+- **Category Assignment**: Dropdown selection with real-time validation
+- **Rich Descriptions**: Multi-line text areas for detailed descriptions
+- **Product Cards**: Beautiful cards with image previews and badges
+- **Edit Mode**: Inline editing with pre-filled forms
+
+#### Digital Menu Control
+- **Visibility Toggle**: Show/hide products from customer menu
+- **Visual Indicators**: Green badges for visible items
+- **Bulk Management**: Manage all products from one view
+- **Live Preview Link**: Direct link to customer menu
+- **Image Gallery Preview**: See all product images at a glance
+
+#### QR Code Generator
+- **Custom QR Codes**: Generate QR codes for any URL
+- **Table Management**: Create unique codes for each table
+- **QR Preview**: Large, clear QR code display
+- **Print Functionality**: One-click print with formatted layout
+- **QR Details**: Name, description, and URL tracking
+- **View Modal**: Full-screen QR code viewing
+- **Download Support**: Save QR codes for external use
+
+#### Settings Tab
+- **Admin Credentials Management**:
+  - Update email, password, and name
+  - Password visibility toggle
+  - Copy to clipboard functionality
+  - Strong password validation
+  - Optional password updates (leave empty to keep current)
+- **Restaurant Branding**:
+  - Custom restaurant name and subname
+  - Logo upload with preview
+  - Primary color picker with live preview
+  - Brand consistency across entire app
+- **Security Features**:
+  - Password strength requirements
+  - Email validation
+  - Secure credential updates
+
+
+### 📱 Customer Menu (QR Code Access)
+
+#### Navigation & Branding
+- **Custom Branding**: Restaurant logo, name, and colors
+- **Language Selector**: Dropdown with 5 language options and flags
+  - 🇬🇧 English
+  - 🇪🇹 Afaan Oromo
+  - 🇪🇹 አማርኛ (Amharic)
+  - 🇸🇴 Soomaali (Somali)
+  - 🇸🇦 العربية (Arabic with RTL support)
+- **Dark/Light Toggle**: Persistent theme preference with smooth transitions
+- **Sticky Navigation**: Always accessible header with backdrop blur
+- **Animated Logo**: Rotating chef hat icon with gradient background
+
+#### Menu Browsing
+- **Search Functionality**: Real-time product search with icon
+- **Category Filters**: Animated filter buttons with active states
+- **Product Grid**: 5-column desktop, 2-column mobile responsive layout
+- **Product Cards**: 
+  - High-quality image display or gradient placeholder
+  - Product name with multi-language support
+  - Category badge with custom colors
+  - Price display with dollar icon
+  - Hover animations (lift and scale effects)
+  - Star rating indicators
+  - Info icon for details
+
+#### Product Detail Modal
+- **Image Carousel**: 
+  - Multiple image support with smooth transitions
+  - Navigation arrows (previous/next)
+  - Thumbnail strip with active indicator
+  - Image counter badge (e.g., "2 / 5")
+  - Full-screen image display
+- **Product Information**:
+  - Large product title with localized text
+  - Category badge with custom branding
+  - 5-star rating display
+  - Price section with gradient background
+  - Detailed description with localization
+  - Product details grid (category, prep time, availability, serving size)
+- **Action Buttons**:
+  - "Order Now" button with gradient and shadow
+  - Share functionality
+  - Favorite/wishlist option
+  - Responsive button layout
+
+#### Visual Design
+- **Gradient Backgrounds**: Smooth color transitions
+- **Card Shadows**: Layered shadow effects for depth
+- **Backdrop Blur**: Modern glass morphism effects
+- **Smooth Animations**: Framer Motion for all interactions
+- **Loading States**: Rotating spinner with branded colors
+- **Empty States**: Friendly "no items" messages with emojis
+- **Footer Section**: Restaurant name, credits, version, copyright
+
+#### Responsive Design
+- **Mobile-First**: Optimized for touch interactions
+- **Tablet Support**: Adaptive grid layouts
+- **Desktop Experience**: Multi-column layouts with hover effects
+- **Touch Gestures**: Swipe support for image carousel
+- **Viewport Optimization**: Proper scaling on all devices
+
+
+---
+
+## 🏗️ Architecture
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                          │
+├─────────────────────────────────────────────────────────────┤
+│  React 19.2 + Vite 8.0 + Tailwind CSS 4.2                  │
+│  • Framer Motion (Animations)                                │
+│  • React Router DOM (Routing)                                │
+│  • Axios (HTTP Client with Interceptors)                     │
+│  • Lucide React (Icons)                                      │
+└─────────────────────────────────────────────────────────────┘
+                            ↕ HTTPS/REST API
+┌─────────────────────────────────────────────────────────────┐
+│                      API GATEWAY LAYER                       │
+├─────────────────────────────────────────────────────────────┤
+│  Express.js 4.18 + Security Middleware                      │
+│  • Helmet (Security Headers)                                 │
+│  • CORS (Cross-Origin Resource Sharing)                      │
+│  • Rate Limiting (DDoS Protection)                           │
+│  • Input Sanitization (XSS Prevention)                       │
+│  • Cookie Parser (Secure Cookies)                            │
+└─────────────────────────────────────────────────────────────┘
+                            ↕
+┌─────────────────────────────────────────────────────────────┐
+│                    BUSINESS LOGIC LAYER                      │
+├─────────────────────────────────────────────────────────────┤
+│  Controllers + Services                                      │
+│  • Authentication (JWT + Refresh Tokens)                     │
+│  • Authorization (Role-Based Access Control)                 │
+│  • Product Management                                        │
+│  • Category Management                                       │
+│  • Order Processing                                          │
+│  • QR Code Generation                                        │
+│  • Settings Management                                       │
+│  • Audit Logging                                             │
+└─────────────────────────────────────────────────────────────┘
+                            ↕
+┌─────────────────────────────────────────────────────────────┐
+│                      DATA ACCESS LAYER                       │
+├─────────────────────────────────────────────────────────────┤
+│  Prisma ORM 5.9                                              │
+│  • Type-safe database queries                                │
+│  • Migration management                                      │
+│  • Connection pooling                                        │
+│  • Transaction support                                       │
+└─────────────────────────────────────────────────────────────┘
+                            ↕
+┌─────────────────────────────────────────────────────────────┐
+│                       DATABASE LAYER                         │
+├─────────────────────────────────────────────────────────────┤
+│  PostgreSQL                                                  │
+│  • Relational data storage                                   │
+│  • ACID compliance                                           │
+│  • Indexing for performance                                  │
+│  • Cascade delete relationships                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Request Flow
+
+```
+Customer Scans QR Code
+        ↓
+Frontend Loads Menu (/)
+        ↓
+Fetch Products (GET /api/products/menu)
+        ↓
+Display with Branding (GET /api/settings/restaurant)
+        ↓
+User Selects Language → Content Updates
+        ↓
+User Clicks Product → Modal Opens
+        ↓
+Image Carousel + Details Display
+```
+
+```
+Admin Login (/admin/login)
+        ↓
+POST /api/auth/admin/login
+        ↓
+JWT Tokens Set in HttpOnly Cookies
+        ↓
+Redirect to Dashboard (/admin)
+        ↓
+Protected Route Validates Token
+        ↓
+Dashboard Loads with Statistics
+        ↓
+Admin Performs Actions (CRUD)
+        ↓
+Audit Log Records Action
+```
+
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend Technologies
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **React** | 19.2.0 | UI framework with latest features |
+| **Vite** | 8.0 beta | Ultra-fast build tool and dev server |
+| **Tailwind CSS** | 4.2.1 | Utility-first CSS framework |
+| **Framer Motion** | 12.34.3 | Animation library for smooth transitions |
+| **React Router DOM** | 7.13.1 | Client-side routing |
+| **Axios** | 1.13.6 | HTTP client with interceptors |
+| **Lucide React** | 0.575.0 | Icon library (50+ icons) |
+| **Recharts** | 3.8.0 | Charting library for analytics |
+
+### Backend Technologies
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Node.js** | 18+ | JavaScript runtime |
+| **Express.js** | 4.18.2 | Web application framework |
+| **Prisma** | 5.9.0 | Next-generation ORM |
+| **PostgreSQL** | Latest | Relational database |
+| **JWT** | 9.0.2 | JSON Web Tokens for auth |
+| **bcryptjs** | 2.4.3 | Password hashing |
+| **Multer** | 2.1.0 | File upload handling |
+| **QRCode** | 1.5.4 | QR code generation |
+| **Helmet** | 8.1.0 | Security headers |
+| **express-rate-limit** | 8.2.1 | Rate limiting middleware |
+| **cookie-parser** | 1.4.7 | Cookie parsing |
+| **cors** | 2.8.5 | Cross-origin resource sharing |
+
+### Development Tools
+
+- **ESLint**: Code linting and formatting
+- **Nodemon**: Auto-restart on file changes
+- **dotenv**: Environment variable management
+- **Prisma Studio**: Database GUI
+
+
+---
+
+## 📂 Project Structure
+
+```
+restaurant-management-system/
+│
+├── backend/                          # Backend Node.js application
+│   ├── src/
+│   │   ├── app.js                   # Express app entry point
+│   │   ├── config/
+│   │   │   └── database.js          # Database configuration
+│   │   ├── controllers/             # Request handlers
+│   │   │   ├── authController.js    # Authentication logic
+│   │   │   ├── categoryController.js
+│   │   │   ├── productController.js
+│   │   │   ├── orderController.js
+│   │   │   ├── qrcodeController.js
+│   │   │   └── settingsController.js
+│   │   ├── middleware/              # Express middleware
+│   │   │   ├── auth.js              # JWT authentication
+│   │   │   ├── securityMiddleware.js
+│   │   │   └── upload.js            # File upload handling
+│   │   ├── routes/                  # API route definitions
+│   │   ├── services/                # Business logic
+│   │   │   ├── auditService.js      # Audit logging
+│   │   │   └── tokenService.js      # Token management
+│   │   └── utils/
+│   │       └── security.js          # Security utilities
+│   ├── prisma/
+│   │   ├── schema.prisma            # Database schema
+│   │   └── migrations/              # Database migrations
+│   ├── uploads/                     # Uploaded images storage
+│   ├── package.json
+│   └── .env                         # Environment variables
+│
+├── frontend/                         # Frontend React application
+│   ├── src/
+│   │   ├── main.jsx                 # React entry point
+│   │   ├── App.jsx                  # Main app component with routing
+│   │   ├── index.css                # Global styles
+│   │   ├── components/              # Reusable components
+│   │   │   ├── LoginForm.jsx        # Login form component
+│   │   │   └── ProtectedRoute.jsx   # Route protection wrapper
+│   │   ├── pages/                   # Page components
+│   │   │   ├── Home.jsx             # Customer menu (945 lines)
+│   │   │   ├── Admin.jsx            # Admin dashboard (1341 lines)
+│   │   │   └── AdminLogin.jsx       # Admin login page
+│   │   └── utils/
+│   │       └── auth.js              # Auth utilities
+│   ├── public/                      # Static assets
+│   ├── package.json
+│   ├── vite.config.js               # Vite configuration
+│   └── .env                         # Environment variables
+│
+└── README.md                         # Project documentation
+```
+
+### Key File Descriptions
+
+#### Backend Files
+- **app.js**: Express server setup with middleware, routes, and error handling
+- **authController.js**: Handles admin login, token refresh, logout, and session management
+- **productController.js**: CRUD operations for products with multi-language support
+- **categoryController.js**: Category management with cascade delete
+- **qrcodeController.js**: QR code generation and management
+- **settingsController.js**: Admin and restaurant settings management
+- **auth.js**: JWT verification middleware with role-based access control
+- **securityMiddleware.js**: Rate limiting, input sanitization, security headers
+- **auditService.js**: Logs all admin actions for security auditing
+- **tokenService.js**: Manages refresh tokens and token rotation
+
+#### Frontend Files
+- **App.jsx**: Main routing configuration with protected routes
+- **Home.jsx**: Customer-facing digital menu with 945 lines of code including:
+  - Multi-language support (5 languages)
+  - Product browsing with search and filters
+  - Image carousel for product details
+  - Dark/light mode toggle
+  - Restaurant branding integration
+- **Admin.jsx**: Complete admin dashboard with 1341 lines including:
+  - Dashboard with statistics
+  - Category management (CRUD)
+  - Product management with multi-image upload
+  - Digital menu visibility control
+  - QR code generator
+  - Settings management (admin credentials + restaurant branding)
+- **ProtectedRoute.jsx**: Route guard component for authentication
+- **auth.js**: Client-side authentication utilities and token management
+
+
+---
+
+## 🎨 UI/UX Design Philosophy
+
+### Design Principles
+
+#### 1. Modern Glassmorphism
+- Backdrop blur effects for depth and elegance
+- Semi-transparent cards with subtle borders
+- Layered shadows for visual hierarchy
+- Frosted glass aesthetic throughout
+
+#### 2. Smooth Animations (60fps)
+- **Page Transitions**: Fade and slide effects using Framer Motion
+- **Card Entrance**: Staggered animations with delay multipliers
+- **Hover Effects**: Scale, lift, and color transitions
+- **Modal Animations**: Spring-based physics for natural feel
+- **Loading States**: Rotating spinners with branded colors
+- **Button Interactions**: Scale on tap, lift on hover
+
+#### 3. Color System
+- **Primary Brand Color**: Customizable via settings (default: Amber #d97706)
+- **Dark Mode**: Gray-900 backgrounds with amber accents
+- **Light Mode**: Warm gradients (amber-50, orange-50, yellow-50)
+- **Semantic Colors**: 
+  - Success: Green-600
+  - Error: Red-600
+  - Warning: Amber-600
+  - Info: Blue-600
+
+#### 4. Typography
+- **Headings**: Bold, large sizes (2xl-4xl) for hierarchy
+- **Body Text**: Medium weight, readable sizes (base-lg)
+- **Labels**: Semibold, small sizes (sm) for form fields
+- **Gradients**: Text gradients for emphasis using bg-clip-text
+
+#### 5. Spacing & Layout
+- **Consistent Scale**: Tailwind spacing (4, 6, 8, 12, 16, 24, 32)
+- **Rounded Corners**: 16px-32px for modern feel
+- **Grid Systems**: 
+  - Mobile: 2 columns
+  - Tablet: 3 columns
+  - Desktop: 4-5 columns
+- **Padding**: Generous padding (p-6, p-8) for breathing room
+
+#### 6. Interactive Elements
+- **Buttons**: 
+  - Gradient backgrounds with shadow
+  - Scale animations on hover/tap
+  - Icon + text combinations
+  - Loading states with spinners
+- **Cards**: 
+  - Hover lift effect (y: -10px)
+  - Shadow increase on hover
+  - Border highlights
+  - Clickable with cursor pointer
+- **Forms**: 
+  - Focus rings with brand color
+  - Validation feedback
+  - Placeholder text
+  - Clear error messages
+
+#### 7. Responsive Design
+- **Mobile-First**: Optimized for touch interactions
+- **Breakpoints**: 
+  - sm: 640px
+  - md: 768px
+  - lg: 1024px
+  - xl: 1280px
+- **Touch Targets**: Minimum 44x44px for accessibility
+- **Viewport Optimization**: Proper scaling on all devices
+
+
+### Component Design Patterns
+
+#### Navigation Bar
+- Sticky positioning for always-accessible navigation
+- Backdrop blur for modern aesthetic
+- Restaurant logo/icon with gradient background
+- Language selector dropdown with flags
+- Dark/light mode toggle with icon rotation
+- Responsive layout (mobile hamburger menu ready)
+
+#### Product Cards
+- Image or gradient placeholder
+- Product name with line-clamp for overflow
+- Price with dollar icon
+- Category badge with brand colors
+- Star rating indicators
+- Hover effects (lift + scale)
+- Click to open detail modal
+
+#### Modal System
+- Full-screen overlay with backdrop blur
+- Spring-based entrance animation
+- Close button with rotation on hover
+- Click outside to dismiss
+- Scroll support for long content
+- Responsive sizing
+
+#### Form Design
+- Clear labels with semibold weight
+- Large input fields (p-4) for easy interaction
+- Focus states with ring effects
+- Validation feedback (inline errors)
+- Submit buttons with loading states
+- Multi-language input fields grouped logically
+
+#### Dashboard Statistics
+- Animated stat cards with icons
+- Color-coded borders (left border accent)
+- Trending indicators
+- Hover lift effect
+- Icon badges with background colors
+- Large numbers for quick scanning
+
+
+### Animation Specifications
+
+#### Timing Functions
+- **Default**: ease-in-out
+- **Spring**: damping: 25, stiffness: 300
+- **Duration**: 0.3s for most transitions
+- **Delay**: Staggered by 0.05s-0.1s for lists
+
+#### Motion Variants
+```javascript
+// Card entrance
+initial: { opacity: 0, scale: 0.9 }
+animate: { opacity: 1, scale: 1 }
+exit: { opacity: 0, scale: 0.9 }
+
+// Page transition
+initial: { opacity: 0, y: 20 }
+animate: { opacity: 1, y: 0 }
+exit: { opacity: 0, y: -20 }
+
+// Hover effect
+whileHover: { y: -10, scale: 1.02 }
+
+// Tap effect
+whileTap: { scale: 0.95 }
+```
+
+#### Loading States
+- Rotating spinner (360deg infinite)
+- Branded colors (amber-600)
+- Transparent border-t for spinner effect
+- Centered with text below
+
+
+### Accessibility Features
+
+- **Keyboard Navigation**: Tab order and focus states
+- **Screen Reader Support**: Semantic HTML and ARIA labels
+- **Color Contrast**: WCAG AA compliant
+- **Touch Targets**: Minimum 44x44px
+- **Focus Indicators**: Visible focus rings
+- **Alt Text**: All images have descriptive alt text
+- **Form Labels**: Properly associated with inputs
+
+
+### User Experience Flows
+
+#### Customer Journey (Home Page)
+1. Scan QR code → Land on menu
+2. See restaurant branding (logo, name, colors)
+3. Select preferred language from dropdown
+4. Toggle dark/light mode if desired
+5. Browse products by category or search
+6. Click product card → View details in modal
+7. Navigate through product images in carousel
+8. Read description and see price
+9. Close modal or continue browsing
+
+#### Admin Journey (Dashboard)
+1. Navigate to /admin/login
+2. Enter credentials (email + password)
+3. JWT tokens set in HttpOnly cookies
+4. Redirect to dashboard with statistics
+5. Navigate between tabs (Dashboard, Categories, Products, Menu, QR Codes, Settings)
+6. Perform CRUD operations with instant feedback
+7. Upload images with preview
+8. Generate QR codes with print functionality
+9. Update restaurant branding and admin credentials
+10. Logout securely
+
+
+### Performance Optimizations
+
+- **Code Splitting**: React.lazy for route-based splitting
+- **Image Optimization**: Proper sizing and lazy loading
+- **Memoization**: React.memo for expensive components
+- **Debouncing**: Search input with debounce
+- **Pagination**: Ready for large datasets
+- **Caching**: Axios interceptors for response caching
+- **Bundle Size**: Tree-shaking with Vite
+- **CSS Purging**: Tailwind removes unused styles
+

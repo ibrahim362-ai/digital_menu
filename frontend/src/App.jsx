@@ -10,6 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         
+        
         {/* Login routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         

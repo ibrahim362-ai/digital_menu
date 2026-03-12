@@ -1,4 +1,59 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* CSS Variables for Dynamic Theming */
+:root {
+  /* Primary Brand Colors - Can be updated from admin settings */
+  --color-primary: #d97706;
+  --color-primary-light: #f59e0b;
+  --color-primary-dark: #b45309;
+  --color-primary-rgb: 217, 119, 6;
+  
+  /* Light Mode Colors */
+  --color-background: #fffbeb;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #fef3c7;
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Mode - Deep Navy/Charcoal Palette */
+.dark {
+  /* Dark Mode Base Colors - Deep Navy/Charcoal instead of pure black */
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-elevated: #334155;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-tertiary: #94a3b8;
+  --color-border: #334155;
+  --color-border-light: #475569;
+  
+  /* Dark Mode Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+  
+  /* Dark Mode Glassmorphism */
+  --glass-bg: rgba(30, 41, 59, 0.3);
+  --glass-border: rgba(71, 85, 105, 0.3);
+  --glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
+}
 
 @layer base {
   html {
@@ -7,9 +62,243 @@
   
   body {
     @apply transition-colors duration-300;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
   }
+
+  * {
+    @apply antialiased;
+  }
+}
+
+/* Glassmorphism Design System - Using CSS Variables */
+@layer components {
+  /* Glass Card - Primary glassmorphism effect */
+  .glass-card {
+    @apply backdrop-blur-md rounded-2xl;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-card-light {
+    @apply backdrop-blur-md rounded-2xl;
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08);
+  }
+
+  .glass-card-dark {
+    @apply backdrop-blur-md rounded-2xl;
+    background: rgba(30, 41, 59, 0.3);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Premium Button Styles with CSS Variables */
+  .btn-primary {
+    @apply px-6 py-3 rounded-2xl font-semibold transition-all duration-300;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    @apply hover:shadow-xl hover:scale-105 active:scale-95;
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+  }
+
+  .btn-glass {
+    @apply px-6 py-3 rounded-2xl font-semibold transition-all duration-300;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    @apply hover:shadow-xl hover:scale-105 active:scale-95;
+  }
+
+  /* Input Styles with CSS Variables */
+  .input-glass {
+    @apply w-full px-4 py-3 rounded-2xl transition-all duration-300;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-primary);
+    @apply focus:ring-4;
+    box-shadow: var(--shadow-md);
+  }
+
+  .input-glass::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  .input-glass-light {
+    @apply w-full px-4 py-3 rounded-2xl transition-all duration-300;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    @apply focus:bg-white focus:ring-4;
+    @apply placeholder:text-gray-500;
+  }
+
+  /* Smooth Animations */
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .scale-up {
+    animation: scaleUp 0.3s ease-in-out;
+  }
+
+  .slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+
+  /* Shimmer Loading Effect */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .shimmer-dark {
+    background: linear-gradient(90deg, #2a2a2a 25%, #1a1a1a 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Button Hover Effects */
+  .btn-hover-scale {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-hover-scale:hover {
+    transform: scale(1.05);
+  }
+
+  .btn-hover-scale:active {
+    transform: scale(0.98);
+  }
+
+  /* Haptic-like Press Feedback */
+  .haptic-press {
+    position: relative;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .haptic-press:active {
+    transform: scale(0.95);
+  }
+
+  .haptic-press:active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    border-radius: inherit;
+    animation: hapticPulse 0.4s ease-out;
+  }
+
+  /* Touch Target Minimum Size */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes hapticPulse {
+  0% {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* Custom Scrollbar with CSS Variables */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-surface);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-light);
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-border);
+}
+
+/* Premium Shadows */
+.shadow-premium {
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-glow-blue {
+  box-shadow: 0 0 40px rgba(0, 123, 255, 0.3);
+}
+
+.shadow-glow-white {
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient Text */
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent;
 }
 
 .dark {
   color-scheme: dark;
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, input, select, textarea {
+  @apply transition-all duration-300;
 }

@@ -150,16 +150,91 @@ export default function Admin() {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('image', file);
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
     try {
-      const { data } = await axios.post(`${API_URL}/upload`, formData, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' }
+      let uploadedUrls = [];
+      
+      // If multiple files, use the multiple endpoint
+      if (files.length > 1) {
+        const formData = new FormData();
+        files.forEach(file => {
+          formData.append('images', file);
+        });
+        
+        console.log('Uploading multiple files:', files.length);
+        const { data } = await axios.post(`${API_URL}/upload/multiple`, formData, {
+          headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          withCredentials: true
+        });
+        console.log('Upload response:', data);
+        uploadedUrls = data.urls;
+      } else {
+        // Single file upload
+        const formData = new FormData();
+        formData.append('image', files[0]);
+        
+        console.log('Uploading single file');
+        const { data } = await axios.post(`${API_URL}/upload`, formData, {
+          headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          withCredentials: true
+        });
+        console.log('Upload response:', data);
+        uploadedUrls = [data.url];
+      }
+      
+      // Store as JSON array
+      let currentImages = [];
+      if (productForm.image) {
+        try {
+          const parsed = JSON.parse(productForm.image);
+          currentImages = Array.isArray(parsed) ? parsed : [productForm.image];
+        } catch {
+          // If not valid JSON, treat as single image or comma-separated
+          currentImages = productForm.image.includes(',') 
+            ? productForm.image.split(',').map(img => img.trim()) 
+            : [productForm.image];
+        }
+      }
+      
+      const newImages = [...currentImages, ...uploadedUrls];
+      setProductForm({ ...productForm, image: JSON.stringify(newImages) });
+      console.log('Images updated successfully');
+    } catch (err) { 
+      console.error('Upload error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        headers: err.response?.headers
       });
-      setProductForm({ ...productForm, image: data.url });
-    } catch (err) { console.error('Failed to upload image'); alert('Failed to upload image'); }
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || err.message;
+      alert(`Failed to upload images: ${errorMsg}`); 
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    try {
+      const currentImages = productForm.image ? JSON.parse(productForm.image) : [];
+      const updatedImages = currentImages.filter((_, index) => index !== indexToRemove);
+      setProductForm({ ...productForm, image: updatedImages.length > 0 ? JSON.stringify(updatedImages) : '' });
+    } catch (err) {
+      console.error('Failed to remove image');
+    }
+  };
+
+  const getProductImages = (imageData) => {
+    if (!imageData) return [];
+    try {
+      const parsed = JSON.parse(imageData);
+      return Array.isArray(parsed) ? parsed : [imageData];
+    } catch {
+      return imageData.includes(',') ? imageData.split(',').map(img => img.trim()) : [imageData];
+    }
   };
 
   const handleProductSubmit = async (e) => {
@@ -464,83 +539,142 @@ export default function Admin() {
               </motion.div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-blue-500">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.1 }} 
+                  whileHover={{ y: -5 }} 
+                  className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl p-6 border-l-4 border-l-blue-500"
+                  style={{
+                    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-600 text-sm font-medium">Total Products</p>
-                      <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.totalProducts}</h3>
+                      <p className="text-gray-700 text-sm font-semibold tracking-wide">Total Products</p>
+                      <h3 className="text-4xl font-extrabold text-gray-900 mt-2">{stats.totalProducts}</h3>
                     </div>
-                    <div className="bg-blue-100 p-4 rounded-xl">
+                    <div className="bg-blue-100/80 backdrop-blur-sm p-4 rounded-2xl">
                       <Package className="w-8 h-8 text-blue-600" />
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center text-green-600 text-sm">
+                  <div className="mt-4 flex items-center text-green-600 text-sm font-medium">
                     <TrendingUp className="w-4 h-4 mr-1" />
                     <span>Active inventory</span>
                   </div>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-purple-500">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.2 }} 
+                  whileHover={{ y: -5 }} 
+                  className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl p-6 border-l-4 border-l-purple-500"
+                  style={{
+                    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-600 text-sm font-medium">Categories</p>
-                      <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.totalCategories}</h3>
+                      <p className="text-gray-700 text-sm font-semibold tracking-wide">Categories</p>
+                      <h3 className="text-4xl font-extrabold text-gray-900 mt-2">{stats.totalCategories}</h3>
                     </div>
-                    <div className="bg-purple-100 p-4 rounded-xl">
+                    <div className="bg-purple-100/80 backdrop-blur-sm p-4 rounded-2xl">
                       <FolderTree className="w-8 h-8 text-purple-600" />
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center text-purple-600 text-sm">
+                  <div className="mt-4 flex items-center text-purple-600 text-sm font-medium">
                     <ShoppingBag className="w-4 h-4 mr-1" />
                     <span>Product groups</span>
                   </div>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-green-500">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.3 }} 
+                  whileHover={{ y: -5 }} 
+                  className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl p-6 border-l-4 border-l-green-500"
+                  style={{
+                    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-600 text-sm font-medium">Menu Items</p>
-                      <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.visibleProducts}</h3>
+                      <p className="text-gray-700 text-sm font-semibold tracking-wide">Menu Items</p>
+                      <h3 className="text-4xl font-extrabold text-gray-900 mt-2">{stats.visibleProducts}</h3>
                     </div>
-                    <div className="bg-green-100 p-4 rounded-xl">
+                    <div className="bg-green-100/80 backdrop-blur-sm p-4 rounded-2xl">
                       <Menu className="w-8 h-8 text-green-600" />
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center text-green-600 text-sm">
+                  <div className="mt-4 flex items-center text-green-600 text-sm font-medium">
                     <Eye className="w-4 h-4 mr-1" />
                     <span>Visible to customers</span>
                   </div>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-amber-500">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.4 }} 
+                  whileHover={{ y: -5 }} 
+                  className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl p-6 border-l-4 border-l-amber-500"
+                  style={{
+                    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-600 text-sm font-medium">QR Codes</p>
-                      <h3 className="text-3xl font-bold text-gray-900 mt-2">{stats.totalQRCodes}</h3>
+                      <p className="text-gray-700 text-sm font-semibold tracking-wide">QR Codes</p>
+                      <h3 className="text-4xl font-extrabold text-gray-900 mt-2">{stats.totalQRCodes}</h3>
                     </div>
-                    <div className="bg-amber-100 p-4 rounded-xl">
+                    <div className="bg-amber-100/80 backdrop-blur-sm p-4 rounded-2xl">
                       <QrCode className="w-8 h-8 text-amber-600" />
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center text-amber-600 text-sm">
+                  <div className="mt-4 flex items-center text-amber-600 text-sm font-medium">
                     <Download className="w-4 h-4 mr-1" />
                     <span>Generated codes</span>
                   </div>
                 </motion.div>
               </div>
 
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-white rounded-2xl shadow-xl p-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: 0.5 }} 
+                className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl p-8"
+                style={{
+                  boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                }}
+              >
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('products')} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-4">
+                  <motion.button 
+                    whileHover={{ scale: 1.02, y: -2 }} 
+                    whileTap={{ scale: 0.98 }} 
+                    onClick={() => setActiveTab('products')} 
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center gap-4"
+                  >
                     <Plus className="w-6 h-6" />
                     <span className="font-semibold">Add New Product</span>
                   </motion.button>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('categories')} className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-4">
+                  <motion.button 
+                    whileHover={{ scale: 1.02, y: -2 }} 
+                    whileTap={{ scale: 0.98 }} 
+                    onClick={() => setActiveTab('categories')} 
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center gap-4"
+                  >
                     <Plus className="w-6 h-6" />
                     <span className="font-semibold">Add Category</span>
                   </motion.button>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('qrcodes')} className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-4">
+                  <motion.button 
+                    whileHover={{ scale: 1.02, y: -2 }} 
+                    whileTap={{ scale: 0.98 }} 
+                    onClick={() => setActiveTab('qrcodes')} 
+                    className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center gap-4"
+                  >
                     <QrCode className="w-6 h-6" />
                     <span className="font-semibold">Generate QR Code</span>
                   </motion.button>
@@ -604,23 +738,43 @@ export default function Admin() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {categories.map((category, index) => (
-                  <motion.div key={category.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.05 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl p-6 border border-amber-200">
+                  <motion.div 
+                    key={category.id} 
+                    initial={{ opacity: 0, scale: 0.9 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    transition={{ delay: index * 0.05 }} 
+                    whileHover={{ y: -5 }} 
+                    className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl p-6"
+                    style={{
+                      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                    }}
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-gray-900 mb-2">{category.name}</h3>
-                        <p className="text-sm text-gray-500">ID: {category.id}</p>
-                        <p className="text-sm text-gray-500 mt-1">Created: {new Date(category.createdAt).toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-600">ID: {category.id}</p>
+                        <p className="text-sm text-gray-600 mt-1">Created: {new Date(category.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <div className="bg-amber-100 p-3 rounded-xl">
+                      <div className="bg-amber-100/80 backdrop-blur-sm p-3 rounded-2xl">
                         <FolderTree className="w-6 h-6 text-amber-600" />
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => startEdit(category)} className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-md transition-all font-medium">
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }} 
+                        onClick={() => startEdit(category)} 
+                        className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-md transition-all font-medium"
+                      >
                         <Edit2 className="w-4 h-4" />
                         Edit
                       </motion.button>
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleDeleteCategory(category.id)} className="flex-1 bg-red-600 text-white px-4 py-3 rounded-xl hover:bg-red-700 flex items-center justify-center gap-2 shadow-md transition-all font-medium">
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }} 
+                        onClick={() => handleDeleteCategory(category.id)} 
+                        className="flex-1 bg-red-600 text-white px-4 py-3 rounded-xl hover:bg-red-700 flex items-center justify-center gap-2 shadow-md transition-all font-medium"
+                      >
                         <Trash2 className="w-4 h-4" />
                         Delete
                       </motion.button>
@@ -696,12 +850,49 @@ export default function Admin() {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                       <ImageIcon className="w-5 h-5" />
-                      Product Image
+                      Product Images (Multiple)
                     </label>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 transition-all" />
-                    {productForm.image && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-4">
-                        <img src={`${BASE_URL}${productForm.image}`} alt="Preview" className="h-40 w-40 object-cover rounded-xl shadow-lg border-4 border-blue-200" />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      multiple 
+                      onChange={handleImageUpload} 
+                      className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 transition-all" 
+                    />
+                    <p className="text-xs text-gray-500 mt-1">You can select multiple images (up to 10)</p>
+                    
+                    {productForm.image && getProductImages(productForm.image).length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"
+                      >
+                        {getProductImages(productForm.image).map((img, index) => (
+                          <motion.div 
+                            key={index}
+                            initial={{ scale: 0 }} 
+                            animate={{ scale: 1 }}
+                            className="relative group"
+                          >
+                            <img 
+                              src={`${BASE_URL}${img}`} 
+                              alt={`Preview ${index + 1}`} 
+                              className="h-32 w-full object-cover rounded-xl shadow-lg border-4 border-blue-200" 
+                            />
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4" />
+                            </motion.button>
+                            <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                              {index + 1}
+                            </div>
+                          </motion.div>
+                        ))}
                       </motion.div>
                     )}
                   </div>
@@ -722,11 +913,30 @@ export default function Admin() {
               </motion.form>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product, index) => (
-                  <motion.div key={product.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.05 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-                    {product.image ? (
-                      <div className="h-48 overflow-hidden">
-                        <img src={`${BASE_URL}${product.image}`} alt={product.name} className="w-full h-full object-cover" />
+                {products.map((product, index) => {
+                  const images = getProductImages(product.image);
+                  const firstImage = images.length > 0 ? images[0] : null;
+                  
+                  return (
+                  <motion.div 
+                    key={product.id} 
+                    initial={{ opacity: 0, scale: 0.9 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    transition={{ delay: index * 0.05 }} 
+                    whileHover={{ y: -5 }} 
+                    className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl overflow-hidden"
+                    style={{
+                      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                    }}
+                  >
+                    {firstImage ? (
+                      <div className="h-48 overflow-hidden relative">
+                        <img src={`${BASE_URL}${firstImage}`} alt={product.name} className="w-full h-full object-cover" />
+                        {images.length > 1 && (
+                          <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold">
+                            +{images.length - 1} more
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -737,24 +947,35 @@ export default function Admin() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <h3 className="text-lg font-bold text-gray-900 mb-1">{product.name}</h3>
-                          <p className="text-sm text-gray-500">{product.category.name}</p>
+                          <p className="text-sm text-gray-600">{product.category.name}</p>
                         </div>
-                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">${product.price}</span>
+                        <span className="bg-green-100/80 backdrop-blur-sm text-green-800 px-3 py-1 rounded-full text-sm font-bold">${product.price}</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
                       <div className="flex gap-2">
-                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => startEditProduct(product)} className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 shadow-md transition-all text-sm font-medium">
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }} 
+                          whileTap={{ scale: 0.95 }} 
+                          onClick={() => startEditProduct(product)} 
+                          className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 shadow-md transition-all text-sm font-medium"
+                        >
                           <Edit2 className="w-4 h-4" />
                           Edit
                         </motion.button>
-                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleDeleteProduct(product.id)} className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 shadow-md transition-all text-sm font-medium">
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }} 
+                          whileTap={{ scale: 0.95 }} 
+                          onClick={() => handleDeleteProduct(product.id)} 
+                          className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 shadow-md transition-all text-sm font-medium"
+                        >
                           <Trash2 className="w-4 h-4" />
                           Delete
                         </motion.button>
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
               {products.length === 0 && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-xl p-12 text-center">
@@ -773,13 +994,32 @@ export default function Admin() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product, index) => (
-                  <motion.div key={product.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.05 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-                    {product.image ? (
+                {products.map((product, index) => {
+                  const images = getProductImages(product.image);
+                  const firstImage = images.length > 0 ? images[0] : null;
+                  
+                  return (
+                  <motion.div 
+                    key={product.id} 
+                    initial={{ opacity: 0, scale: 0.9 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    transition={{ delay: index * 0.05 }} 
+                    whileHover={{ y: -5 }} 
+                    className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl overflow-hidden"
+                    style={{
+                      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                    }}
+                  >
+                    {firstImage ? (
                       <div className="h-48 overflow-hidden relative">
-                        <img src={`${BASE_URL}${product.image}`} alt={product.name} className="w-full h-full object-cover" />
+                        <img src={`${BASE_URL}${firstImage}`} alt={product.name} className="w-full h-full object-cover" />
+                        {images.length > 1 && (
+                          <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold">
+                            +{images.length - 1} more
+                          </div>
+                        )}
                         {product.showInMenu && (
-                          <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                          <div className="absolute top-3 right-3 bg-green-500 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                             <Eye className="w-3 h-3" />
                             Visible
                           </div>
@@ -789,7 +1029,7 @@ export default function Admin() {
                       <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
                         <ImageIcon className="w-16 h-16 text-gray-400" />
                         {product.showInMenu && (
-                          <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                          <div className="absolute top-3 right-3 bg-green-500 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                             <Eye className="w-3 h-3" />
                             Visible
                           </div>
@@ -800,12 +1040,15 @@ export default function Admin() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <h3 className="text-lg font-bold text-gray-900 mb-1">{product.name}</h3>
-                          <p className="text-sm text-gray-500">{product.category.name}</p>
+                          <p className="text-sm text-gray-600">{product.category.name}</p>
                         </div>
-                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">${product.price}</span>
+                        <span className="bg-green-100/80 backdrop-blur-sm text-green-800 px-3 py-1 rounded-full text-sm font-bold">${product.price}</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleToggleMenuVisibility(product.id)}
+                      <motion.button 
+                        whileHover={{ scale: 1.02 }} 
+                        whileTap={{ scale: 0.98 }} 
+                        onClick={() => handleToggleMenuVisibility(product.id)}
                         className={`w-full px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-md transition-all ${
                           product.showInMenu 
                             ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800' 
@@ -816,7 +1059,8 @@ export default function Admin() {
                       </motion.button>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
               {products.length === 0 && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-xl p-12 text-center">
@@ -872,29 +1116,64 @@ export default function Admin() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {qrcodes.map((qrcode, index) => (
-                  <motion.div key={qrcode.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.1 }} whileHover={{ y: -5 }} className="bg-white rounded-2xl shadow-xl p-6 border border-amber-200">
+                  <motion.div 
+                    key={qrcode.id} 
+                    initial={{ opacity: 0, scale: 0.9 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    transition={{ delay: index * 0.1 }} 
+                    whileHover={{ y: -5 }} 
+                    className="backdrop-blur-md bg-white/30 border border-white/40 rounded-2xl p-6"
+                    style={{
+                      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 20px 40px rgba(0, 0, 0, 0.08)'
+                    }}
+                  >
                     <h3 className="text-xl font-bold mb-2 text-gray-900">{qrcode.name}</h3>
                     <p className="text-sm text-gray-600 mb-4">{qrcode.description}</p>
-                    <div className="flex justify-center mb-4 bg-gray-50 p-4 rounded-xl">
-                      <motion.img whileHover={{ scale: 1.05 }} src={qrcode.qrCodeData} alt={qrcode.name} className="w-48 h-48 rounded-lg shadow-md" />
+                    <div className="flex justify-center mb-4 bg-gray-50/50 backdrop-blur-sm p-4 rounded-2xl">
+                      <motion.img 
+                        whileHover={{ scale: 1.05 }} 
+                        src={qrcode.qrCodeData} 
+                        alt={qrcode.name} 
+                        className="w-48 h-48 rounded-lg shadow-md" 
+                      />
                     </div>
-                    <p className="text-xs text-gray-500 mb-4 break-all bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-600 mb-4 break-all bg-gray-50/50 backdrop-blur-sm p-3 rounded-lg">
                       <span className="font-semibold">URL:</span> {qrcode.url}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setViewingQrcode(qrcode)} className="bg-gradient-to-r from-green-600 to-green-700 text-white px-3 py-3 rounded-xl hover:from-green-700 hover:to-green-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium">
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }} 
+                        onClick={() => setViewingQrcode(qrcode)} 
+                        className="bg-gradient-to-r from-green-600 to-green-700 text-white px-3 py-3 rounded-xl hover:from-green-700 hover:to-green-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium"
+                      >
                         <Eye className="w-4 h-4" />
                         View
                       </motion.button>
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handlePrintQrcode(qrcode)} className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium">
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }} 
+                        onClick={() => handlePrintQrcode(qrcode)} 
+                        className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium"
+                      >
                         <Printer className="w-4 h-4" />
                         Print
                       </motion.button>
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => startEditQrcode(qrcode)} className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-3 py-3 rounded-xl hover:from-amber-700 hover:to-amber-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium">
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }} 
+                        onClick={() => startEditQrcode(qrcode)} 
+                        className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-3 py-3 rounded-xl hover:from-amber-700 hover:to-amber-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium"
+                      >
                         <Edit2 className="w-4 h-4" />
                         Edit
                       </motion.button>
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleDeleteQrcode(qrcode.id)} className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-3 rounded-xl hover:from-red-700 hover:to-red-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium">
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }} 
+                        onClick={() => handleDeleteQrcode(qrcode.id)} 
+                        className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-3 rounded-xl hover:from-red-700 hover:to-red-800 flex items-center justify-center gap-2 shadow-md transition-all font-medium"
+                      >
                         <Trash2 className="w-4 h-4" />
                         Delete
                       </motion.button>
