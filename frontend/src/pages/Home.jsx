@@ -805,8 +805,7 @@ export default function Home() {
                             backgroundClip: 'text'
                           }}
                         >
-                          <DollarSign className="w-4 h-4 text-green-600" />
-                          {product.price}
+                          {product.price} Birr
                         </motion.span>
                         <motion.div
                           initial={{ opacity: 0, scale: 0 }}
@@ -1137,7 +1136,7 @@ export default function Home() {
                         <div>
                           <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Price</p>
                           <span className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                            {selectedProduct.price}
+                            {selectedProduct.price} Birr
                           </span>
                         </div>
                       </motion.div>

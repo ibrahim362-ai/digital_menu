@@ -887,7 +887,7 @@ export default function Admin() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Price *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Price (Birr) *</label>
                       <input type="number" step="0.01" placeholder="0.00" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all" required />
                     </div>
                     <div>
@@ -1003,7 +1003,7 @@ export default function Admin() {
                           <h3 className="text-lg font-bold text-gray-900 mb-1">{product.name}</h3>
                           <p className="text-sm text-gray-600">{product.category.name}</p>
                         </div>
-                        <span className="bg-green-100/80 backdrop-blur-sm text-green-800 px-3 py-1 rounded-full text-sm font-bold">${product.price}</span>
+                        <span className="bg-green-100/80 backdrop-blur-sm text-green-800 px-3 py-1 rounded-full text-sm font-bold">{product.price} Birr</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
                       <div className="flex gap-2">
@@ -1096,7 +1096,7 @@ export default function Admin() {
                           <h3 className="text-lg font-bold text-gray-900 mb-1">{product.name}</h3>
                           <p className="text-sm text-gray-600">{product.category.name}</p>
                         </div>
-                        <span className="bg-green-100/80 backdrop-blur-sm text-green-800 px-3 py-1 rounded-full text-sm font-bold">${product.price}</span>
+                        <span className="bg-green-100/80 backdrop-blur-sm text-green-800 px-3 py-1 rounded-full text-sm font-bold">{product.price} Birr</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
                       <motion.button 
