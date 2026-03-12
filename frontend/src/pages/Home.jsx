@@ -153,6 +153,22 @@ export default function Home() {
     fetchRestaurantSettings();
   }, []);
 
+  // Update document title and favicon when restaurant settings change
+  useEffect(() => {
+    if (restaurantSettings.name) {
+      document.title = restaurantSettings.name;
+    }
+    
+    if (restaurantSettings.logo) {
+      // Update favicon to use restaurant logo
+      const favicon = document.querySelector("link[rel*='icon']") || document.createElement('link');
+      favicon.type = 'image/x-icon';
+      favicon.rel = 'icon';
+      favicon.href = `${API_URL.replace('/api', '')}${restaurantSettings.logo}`;
+      document.getElementsByTagName('head')[0].appendChild(favicon);
+    }
+  }, [restaurantSettings.name, restaurantSettings.logo]);
+
   // Update CSS variables when restaurant settings change
   useEffect(() => {
     if (restaurantSettings.primaryColor) {
