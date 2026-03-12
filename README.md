@@ -638,3 +638,767 @@ whileTap: { scale: 0.95 }
 - **Bundle Size**: Tree-shaking with Vite
 - **CSS Purging**: Tailwind removes unused styles
 
+
+
+---
+
+## 📦 Installation & Deployment
+
+### Local Development Setup
+
+#### Prerequisites
+- Node.js 18+ 
+- PostgreSQL database
+- npm or yarn package manager
+
+#### Backend Setup
+```bash
+# Navigate to backend directory
+cd backend
+
+# Install dependencies
+npm install
+
+# Create .env file
+cat > .env << 'EOF'
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name?schema=public"
+JWT_SECRET="your-secret-key-here"
+JWT_REFRESH_SECRET="your-refresh-secret-here"
+NODE_ENV="development"
+CORS_ORIGIN="http://localhost:5173"
+PORT=5050
+EOF
+
+# Run database migrations
+npx prisma generate
+npx prisma migrate deploy
+
+# Seed database (optional)
+node seed.js
+
+# Start development server
+npm run dev
+```
+
+#### Frontend Setup
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Create .env file
+echo 'VITE_API_URL=http://localhost:5050/api' > .env
+
+# Start development server
+npm run dev
+```
+
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5050/api
+- Admin Panel: http://localhost:5173/admin/login
+
+---
+
+### 🚀 Production Deployment
+
+This project includes automated deployment scripts for easy VPS deployment.
+
+#### Quick Deployment (Recommended)
+
+**Option 1: Deploy to /var/www/digital_menu**
+```bash
+ssh root@your-server-ip
+
+cd /var/www
+git clone https://github.com/ibrahim362-ai/digital_menu.git
+cd digital_menu
+
+chmod +x complete-deployment.sh
+./complete-deployment.sh
+```
+
+**Option 2: Deploy to /root/api**
+```bash
+ssh root@your-server-ip
+
+cd /root
+curl -o setup.sh https://raw.githubusercontent.com/ibrahim362-ai/digital_menu/main/setup-root-api.sh
+chmod +x setup.sh
+./setup.sh
+```
+
+#### Manual Deployment Steps
+
+##### 1. Server Prerequisites
+```bash
+# Update system
+apt update && apt upgrade -y
+
+# Install Node.js 18
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
+
+# Install PM2 and Nginx
+npm install -g pm2
+apt install -y nginx postgresql-client
+```
+
+##### 2. Clone Repository
+```bash
+cd /var/www
+git clone https://github.com/ibrahim362-ai/digital_menu.git
+cd digital_menu
+```
+
+##### 3. Backend Configuration
+```bash
+cd backend
+npm install
+
+# Create production .env
+cat > .env << 'EOF'
+DATABASE_URL="postgresql://user:password@host:port/database?schema=public"
+JWT_SECRET="your-production-secret"
+JWT_REFRESH_SECRET="your-production-refresh-secret"
+NODE_ENV="production"
+CORS_ORIGIN="https://yourdomain.com"
+PORT=5050
+EOF
+
+# Run migrations
+npx prisma generate
+npx prisma migrate deploy
+
+# Start with PM2
+pm2 start src/app.js --name "digital-menu-backend"
+pm2 save
+pm2 startup
+```
+
+##### 4. Frontend Configuration
+```bash
+cd ../frontend
+npm install
+
+# Create production .env
+echo 'VITE_API_URL=https://yourdomain.com/api' > .env
+
+# Build
+npm run build
+
+# Deploy to web directory
+mkdir -p /var/www/html/digital-menu
+cp -r dist/* /var/www/html/digital-menu/
+chown -R www-data:www-data /var/www/html/digital-menu
+chmod -R 755 /var/www/html/digital-menu
+```
+
+##### 5. Nginx Configuration
+```bash
+cat > /etc/nginx/sites-available/digital-menu << 'EOF'
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    root /var/www/html/digital-menu;
+    index index.html;
+
+    client_max_body_size 50M;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:5050/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:5050/uploads/;
+        proxy_set_header Host $host;
+    }
+}
+EOF
+
+# Enable site
+ln -sf /etc/nginx/sites-available/digital-menu /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+
+# Test and restart
+nginx -t
+systemctl restart nginx
+```
+
+##### 6. SSL Certificate (Optional but Recommended)
+```bash
+apt install -y certbot python3-certbot-nginx
+certbot --nginx -d yourdomain.com
+```
+
+---
+
+### 🔧 Deployment Scripts
+
+The project includes several deployment scripts:
+
+| Script | Purpose |
+|--------|---------|
+| `complete-deployment.sh` | Full automated deployment to /var/www |
+| `deploy-production.sh` | Production deployment with frontend rebuild |
+| `setup-root-api.sh` | Deploy backend to /root/api |
+| `deploy-to-root-api.sh` | Alternative /root/api deployment |
+| `setup-http-only.sh` | HTTP-only setup (no SSL) |
+| `setup-ssl.sh` | SSL certificate setup with Let's Encrypt |
+| `fix-403-error.sh` | Fix file permission issues |
+| `quick-fix.sh` | Quick troubleshooting and restart |
+| `check-config.sh` | Verify deployment configuration |
+| `diagnose.sh` | Comprehensive system diagnostics |
+
+---
+
+### 🔍 Verification & Troubleshooting
+
+#### Check Deployment Status
+```bash
+# Check backend status
+pm2 status
+pm2 logs digital-menu-backend
+
+# Test backend health
+curl http://localhost:5050/api/health
+
+# Check Nginx status
+systemctl status nginx
+nginx -t
+
+# View logs
+tail -f /var/log/nginx/error.log
+```
+
+#### Common Issues
+
+**Backend not starting:**
+```bash
+cd /var/www/digital_menu/backend
+pm2 logs digital-menu-backend
+# Check for database connection errors or missing dependencies
+```
+
+**403 Forbidden error:**
+```bash
+./fix-403-error.sh
+# Or manually:
+chown -R www-data:www-data /var/www/html/digital-menu
+chmod -R 755 /var/www/html/digital-menu
+```
+
+**API connection errors:**
+- Verify CORS_ORIGIN in backend .env includes your domain
+- Check VITE_API_URL in frontend .env points to correct API URL
+- Ensure backend is running on port 5050
+
+**Database connection issues:**
+```bash
+# Test database connection
+cd /var/www/digital_menu/backend
+npx prisma db pull
+```
+
+---
+
+### 🔄 Updating Deployment
+
+```bash
+# Pull latest changes
+cd /var/www/digital_menu
+git pull origin main
+
+# Update backend
+cd backend
+npm install
+npx prisma migrate deploy
+pm2 restart digital-menu-backend
+
+# Update frontend
+cd ../frontend
+npm install
+npm run build
+cp -r dist/* /var/www/html/digital-menu/
+```
+
+---
+
+### 📊 Monitoring & Maintenance
+
+#### PM2 Commands
+```bash
+pm2 status                      # View all processes
+pm2 logs digital-menu-backend   # View logs
+pm2 restart digital-menu-backend # Restart backend
+pm2 stop digital-menu-backend   # Stop backend
+pm2 delete digital-menu-backend # Remove process
+pm2 monit                       # Real-time monitoring
+```
+
+#### Database Backup
+```bash
+# Backup database
+pg_dump -h host -U user -d database > backup.sql
+
+# Restore database
+psql -h host -U user -d database < backup.sql
+```
+
+#### Log Rotation
+```bash
+# Nginx logs
+logrotate /etc/logrotate.d/nginx
+
+# PM2 logs
+pm2 flush  # Clear logs
+pm2 install pm2-logrotate  # Auto log rotation
+```
+
+---
+
+## 🌐 API Documentation
+
+### Authentication Endpoints
+
+#### Admin Login
+```http
+POST /api/auth/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+
+Response: 200 OK
+{
+  "message": "Login successful",
+  "admin": {
+    "id": 1,
+    "email": "admin@example.com",
+    "name": "Admin Name"
+  }
+}
+```
+
+#### Refresh Token
+```http
+POST /api/auth/refresh
+Cookie: refreshToken=xxx
+
+Response: 200 OK
+{
+  "message": "Token refreshed"
+}
+```
+
+#### Logout
+```http
+POST /api/auth/logout
+Authorization: Bearer <token>
+
+Response: 200 OK
+{
+  "message": "Logged out successfully"
+}
+```
+
+### Product Endpoints
+
+#### Get All Products (Admin)
+```http
+GET /api/products
+Authorization: Bearer <token>
+
+Response: 200 OK
+[
+  {
+    "id": 1,
+    "name": "Product Name",
+    "price": 9.99,
+    "categoryId": 1,
+    "showInMenu": true
+  }
+]
+```
+
+#### Get Menu Products (Public)
+```http
+GET /api/products/menu
+
+Response: 200 OK
+[
+  {
+    "id": 1,
+    "name": "Product Name",
+    "nameOr": "Maqaa Oomishaa",
+    "price": 9.99,
+    "image": "/uploads/image.jpg",
+    "category": {
+      "id": 1,
+      "name": "Category"
+    }
+  }
+]
+```
+
+#### Create Product
+```http
+POST /api/products
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "New Product",
+  "nameOr": "Oomisha Haaraa",
+  "price": 15.99,
+  "categoryId": 1,
+  "description": "Product description",
+  "showInMenu": true
+}
+
+Response: 201 Created
+```
+
+#### Update Product
+```http
+PUT /api/products/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Updated Product",
+  "price": 19.99
+}
+
+Response: 200 OK
+```
+
+#### Delete Product
+```http
+DELETE /api/products/:id
+Authorization: Bearer <token>
+
+Response: 200 OK
+{
+  "message": "Product deleted successfully"
+}
+```
+
+### Category Endpoints
+
+#### Get All Categories
+```http
+GET /api/categories
+Authorization: Bearer <token>
+
+Response: 200 OK
+[
+  {
+    "id": 1,
+    "name": "Category Name",
+    "nameOr": "Maqaa Ramaddii"
+  }
+]
+```
+
+#### Create Category
+```http
+POST /api/categories
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "New Category",
+  "nameOr": "Ramaddii Haaraa",
+  "nameAm": "አዲስ ምድብ",
+  "nameSo": "Qaybta Cusub",
+  "nameAr": "فئة جديدة"
+}
+
+Response: 201 Created
+```
+
+### Settings Endpoints
+
+#### Get Restaurant Settings (Public)
+```http
+GET /api/settings/restaurant
+
+Response: 200 OK
+{
+  "id": 1,
+  "name": "Restaurant Name",
+  "subname": "Tagline",
+  "logo": "/uploads/logo.jpg",
+  "primaryColor": "#d97706"
+}
+```
+
+#### Update Restaurant Settings
+```http
+PUT /api/settings/restaurant
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "New Restaurant Name",
+  "primaryColor": "#ff6600"
+}
+
+Response: 200 OK
+```
+
+#### Update Admin Credentials
+```http
+PUT /api/settings/admin
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com",
+  "name": "New Name",
+  "password": "newpassword123"
+}
+
+Response: 200 OK
+```
+
+### QR Code Endpoints
+
+#### Get All QR Codes
+```http
+GET /api/qrcodes
+Authorization: Bearer <token>
+
+Response: 200 OK
+[
+  {
+    "id": 1,
+    "name": "Table 1",
+    "url": "https://yourdomain.com",
+    "qrCodeData": "data:image/png;base64,..."
+  }
+]
+```
+
+#### Create QR Code
+```http
+POST /api/qrcodes
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Table 5",
+  "url": "https://yourdomain.com",
+  "description": "QR code for table 5"
+}
+
+Response: 201 Created
+```
+
+---
+
+## 🗄️ Database Schema
+
+### Models Overview
+
+```prisma
+model Admin {
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  password          String
+  name              String
+  isActive          Boolean   @default(true)
+  failedLoginCount  Int       @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  passwordChangedAt DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  nameOr    String?   // Afaan Oromo
+  nameAm    String?   // Amharic
+  nameSo    String?   // Somali
+  nameAr    String?   // Arabic
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id             Int         @id @default(autoincrement())
+  name           String
+  nameOr         String?
+  nameAm         String?
+  nameSo         String?
+  nameAr         String?
+  description    String?
+  descriptionOr  String?
+  descriptionAm  String?
+  descriptionSo  String?
+  descriptionAr  String?
+  price          Float
+  image          String?
+  categoryId     Int
+  category       Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  showInMenu     Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model RestaurantSettings {
+  id           Int      @id @default(autoincrement())
+  name         String   @default("My Restaurant")
+  subname      String?
+  logo         String?
+  primaryColor String   @default("#d97706")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model QRCode {
+  id          Int      @id @default(autoincrement())
+  name        String
+  url         String
+  qrCodeData  String   @db.Text
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  userType  String
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  userType   String
+  action     String
+  resource   String?
+  resourceId Int?
+  details    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+```
+
+---
+
+## 🔒 Security Features
+
+### Authentication & Authorization
+- JWT-based authentication with access and refresh tokens
+- HttpOnly cookies for token storage
+- Token rotation on refresh
+- Account lockout after failed login attempts
+- Password hashing with bcrypt
+- Role-based access control (RBAC)
+
+### Security Middleware
+- Helmet.js for security headers
+- CORS with whitelist configuration
+- Rate limiting (100 requests per 15 minutes)
+- Input sanitization to prevent XSS
+- SQL injection prevention via Prisma ORM
+- Content-Type validation
+
+### Audit Logging
+- All admin actions logged
+- IP address and user agent tracking
+- Failed login attempt monitoring
+- Resource access tracking
+
+### Data Protection
+- Environment variables for sensitive data
+- Secure password requirements
+- Session management with automatic expiry
+- Refresh token revocation support
+
+---
+
+## 🌍 Multi-Language Support
+
+The system supports 5 languages with complete translations:
+
+| Language | Code | Script | RTL Support |
+|----------|------|--------|-------------|
+| English | en | Latin | No |
+| Afaan Oromo | or | Latin | No |
+| Amharic (አማርኛ) | am | Ethiopic | No |
+| Somali (Soomaali) | so | Latin | No |
+| Arabic (العربية) | ar | Arabic | Yes |
+
+### Implementation
+- All product names and descriptions support 5 languages
+- Category names translated
+- UI language selector with flag icons
+- Automatic RTL layout for Arabic
+- Language preference persistence in localStorage
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 👨‍💻 Author
+
+**Ibrahim**
+- GitHub: [@ibrahim362-ai](https://github.com/ibrahim362-ai)
+- Repository: [digital_menu](https://github.com/ibrahim362-ai/digital_menu)
+
+---
+
+## 🙏 Acknowledgments
+
+- React team for the amazing framework
+- Prisma for the excellent ORM
+- Tailwind CSS for the utility-first CSS framework
+- Framer Motion for smooth animations
+- All open-source contributors
+
+---
+
+## 📞 Support
+
+For issues, questions, or contributions:
+- Open an issue on GitHub
+- Submit a pull request
+- Contact via GitHub profile
+
+---
+
+**Made with ❤️ for restaurants worldwide**
