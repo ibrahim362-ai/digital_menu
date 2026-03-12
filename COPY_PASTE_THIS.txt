@@ -1,0 +1,28 @@
+═══════════════════════════════════════════════════════════════
+  🔒 FIX "NOT SECURE" WARNING - COPY THIS COMMAND
+═══════════════════════════════════════════════════════════════
+
+Copy and paste this entire command into your terminal:
+
+ssh root@76.13.48.245 "cd /var/www/digital_menu && chmod +x deploy/*.sh && ./deploy/enable-ssl-now.sh"
+
+───────────────────────────────────────────────────────────────
+
+What this does:
+✓ Connects to your VPS server
+✓ Installs SSL certificate (Let's Encrypt)
+✓ Configures HTTPS
+✓ Enables automatic renewal
+✓ Makes your site secure
+
+Time: 2-3 minutes
+Cost: FREE (Let's Encrypt is free)
+
+───────────────────────────────────────────────────────────────
+
+After running:
+1. Wait 2 minutes
+2. Visit: https://simoo.skoolific.com
+3. See the padlock 🔒 (no more "Not secure")
+
+═══════════════════════════════════════════════════════════════

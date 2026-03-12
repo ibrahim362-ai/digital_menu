@@ -9,6 +9,20 @@
 
 ---
 
+## 🔒 IMPORTANT: Fix "Not Secure" Warning
+
+**Is your site showing "Not secure" in the browser?** 
+
+👉 **[Click here for the quick SSL fix guide](FIX_SSL_NOW.md)**
+
+Your site needs HTTPS enabled. Run this one command on your VPS:
+```bash
+ssh root@76.13.48.245
+cd /var/www/digital_menu && ./deploy/enable-ssl-now.sh
+```
+
+---
+
 ## 📑 Table of Contents
 
 - [Overview](#-overview)
@@ -24,7 +38,6 @@
 - [Multi-Language Support](#-multi-language-support)
 - [User Flows](#-user-flows)
 - [Deployment](#-deployment)
-- [Troubleshooting](#-troubleshooting)
 
 ---
 
@@ -381,6 +394,8 @@ restaurant-management-system/
 │   │   ├── schema.prisma            # Database schema
 │   │   └── migrations/              # Database migrations
 │   ├── uploads/                     # Uploaded images storage
+│   ├── seed.js                      # Database seeding script
+│   ├── server.js                    # Server entry point
 │   ├── package.json
 │   └── .env                         # Environment variables
 │
@@ -704,33 +719,13 @@ The application will be available at:
 
 ### 🚀 Production Deployment
 
-This project includes automated deployment scripts for easy VPS deployment.
+#### Prerequisites
+- PostgreSQL database URL
+- Domain name or server IP
+- Root/sudo access to VPS
+- Node.js 18+ installed
 
-#### Quick Deployment (Recommended)
-
-**Option 1: Deploy to /var/www/digital_menu**
-```bash
-ssh root@your-server-ip
-
-cd /var/www
-git clone https://github.com/ibrahim362-ai/digital_menu.git
-cd digital_menu
-
-chmod +x complete-deployment.sh
-./complete-deployment.sh
-```
-
-**Option 2: Deploy to /root/api**
-```bash
-ssh root@your-server-ip
-
-cd /root
-curl -o setup.sh https://raw.githubusercontent.com/ibrahim362-ai/digital_menu/main/setup-root-api.sh
-chmod +x setup.sh
-./setup.sh
-```
-
-#### Manual Deployment Steps
+#### Deployment Steps
 
 ##### 1. Server Prerequisites
 ```bash
@@ -847,25 +842,6 @@ certbot --nginx -d yourdomain.com
 
 ---
 
-### 🔧 Deployment Scripts
-
-The project includes several deployment scripts:
-
-| Script | Purpose |
-|--------|---------|
-| `complete-deployment.sh` | Full automated deployment to /var/www |
-| `deploy-production.sh` | Production deployment with frontend rebuild |
-| `setup-root-api.sh` | Deploy backend to /root/api |
-| `deploy-to-root-api.sh` | Alternative /root/api deployment |
-| `setup-http-only.sh` | HTTP-only setup (no SSL) |
-| `setup-ssl.sh` | SSL certificate setup with Let's Encrypt |
-| `fix-403-error.sh` | Fix file permission issues |
-| `quick-fix.sh` | Quick troubleshooting and restart |
-| `check-config.sh` | Verify deployment configuration |
-| `diagnose.sh` | Comprehensive system diagnostics |
-
----
-
 ### 🔍 Verification & Troubleshooting
 
 #### Check Deployment Status
@@ -896,8 +872,6 @@ pm2 logs digital-menu-backend
 
 **403 Forbidden error:**
 ```bash
-./fix-403-error.sh
-# Or manually:
 chown -R www-data:www-data /var/www/html/digital-menu
 chmod -R 755 /var/www/html/digital-menu
 ```
