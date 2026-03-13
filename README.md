@@ -5,6 +5,7 @@ A modern, full-stack restaurant management system with QR code ordering, multi-l
 ## Features
 
 - **Multi-language Support**: English, Afaan Oromo, Amharic, Somali, Arabic
+- **SEO-Friendly URLs**: Automatic slug generation for categories and products
 - **QR Code Ordering**: Customers scan QR codes to view menu and place orders
 - **Real-time Order Management**: Kitchen and cashier dashboards for order tracking
 - **Product & Category Management**: Full CRUD operations with image uploads
@@ -72,13 +73,49 @@ npm run dev
 
 ## Production Deployment
 
-See [deploy/DEPLOYMENT_GUIDE.md](deploy/DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
+### Quick Deploy to VPS Server
 
-Quick deployment:
 ```bash
+# SSH into your server
+ssh root@YOUR_SERVER_IP
+
+# Download and run deployment script
+curl -o deploy.sh https://raw.githubusercontent.com/ibrahim362-ai/digital_menu/main/SERVER-DEPLOY.sh
+chmod +x deploy.sh
+./deploy.sh
+```
+
+The script automatically installs Node.js, PostgreSQL, Nginx, PM2, and deploys your application.
+
+### Manual Deployment
+
+```bash
+git clone https://github.com/ibrahim362-ai/digital_menu.git
+cd digital_menu
 chmod +x deploy/*.sh
 ./deploy/deploy-all.sh
+
+# Apply SEO migration
+cd backend
+npx prisma migrate deploy
+node generate-slugs.js
+pm2 restart restaurant-backend
 ```
+
+### Platform as a Service (Railway/Render)
+
+1. Sign up at Railway.app or Render.com
+2. Connect your GitHub repository
+3. Add PostgreSQL database
+4. Deploy backend (root: `backend`)
+5. Deploy frontend (root: `frontend`)
+6. Run migrations in backend terminal:
+```bash
+npx prisma migrate deploy
+node generate-slugs.js
+```
+
+See [deploy/README.md](deploy/README.md) for detailed instructions.
 
 ## Project Structure
 
