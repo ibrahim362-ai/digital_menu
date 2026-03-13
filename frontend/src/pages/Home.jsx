@@ -1314,6 +1314,28 @@ export default function Home() {
                           <span className="relative z-10">Favorite</span>
                         </motion.button>
                       </div>
+
+                      {/* Close Button for Mobile */}
+                      <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        whileHover={{ 
+                          scale: 1.02,
+                          transition: { type: "spring", stiffness: 400, damping: 10 }
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedProduct(null)}
+                        className={`md:hidden w-full py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 touch-target haptic-press`}
+                        style={{ 
+                          backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+                          color: darkMode ? '#e5e7eb' : '#374151',
+                          minHeight: '52px'
+                        }}
+                      >
+                        <X className="w-5 h-5" />
+                        <span>Close</span>
+                      </motion.button>
                     </motion.div>
                   </div>
                 </div>
