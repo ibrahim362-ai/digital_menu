@@ -1,0 +1,64 @@
+========================================
+DEPLOY TO YOUR SERVER - COPY & PASTE
+========================================
+
+Step 1: SSH into your server
+-----------------------------
+ssh root@76.13.48.245
+
+
+Step 2: Run these commands (one by one)
+----------------------------------------
+
+# Download deployment script
+curl -o deploy.sh https://raw.githubusercontent.com/ibrahim362-ai/digital_menu/main/SERVER-DEPLOY.sh
+
+# Make it executable
+chmod +x deploy.sh
+
+# Run deployment
+./deploy.sh
+
+
+That's it! Wait 5-10 minutes for installation to complete.
+
+========================================
+AFTER DEPLOYMENT
+========================================
+
+Your site will be live at:
+- Frontend: http://76.13.48.245
+- Admin: http://76.13.48.245/admin
+
+Login with:
+- Email: admin@restaurant.com
+- Password: admin123
+
+⚠️ CHANGE PASSWORD IMMEDIATELY!
+
+========================================
+USEFUL COMMANDS
+========================================
+
+# Check if backend is running
+pm2 status
+
+# View backend logs
+pm2 logs restaurant-backend
+
+# Restart backend
+pm2 restart restaurant-backend
+
+# Check Nginx
+systemctl status nginx
+
+========================================
+UPDATE YOUR APP LATER
+========================================
+
+cd /root/digital_menu
+git pull origin main
+cd backend && npm install && pm2 restart restaurant-backend
+cd ../frontend && npm install && npm run build
+
+========================================
