@@ -29,16 +29,26 @@ async function main() {
     where: { id: 1 },
     update: {
       logo: '/logo.png',
+      seoKeywords: 'Cafe Dire Dawa, ethiopia, simoo cafe, coffee shop dire dawa, restaurant dire dawa, best cafe ethiopia, ethiopian coffee, dire dawa restaurants',
+      seoDescription: 'Simoo Cafe - Experience the finest coffee and delicious food in Dire Dawa, Ethiopia. Your favorite local cafe for authentic Ethiopian cuisine and premium coffee.',
+      location: 'Dire Dawa',
+      city: 'Dire Dawa',
+      country: 'Ethiopia',
     },
     create: {
-      name: 'My Restaurant',
-      subname: 'Fine Dining Experience',
-      browserTitle: 'Restaurant Management',
+      name: 'Simoo Cafe',
+      subname: 'Best Coffee & Food in Dire Dawa',
+      browserTitle: 'Simoo Cafe - Dire Dawa, Ethiopia',
       primaryColor: '#d97706',
       logo: '/logo.png',
+      seoKeywords: 'Cafe Dire Dawa, ethiopia, simoo cafe, coffee shop dire dawa, restaurant dire dawa, best cafe ethiopia, ethiopian coffee, dire dawa restaurants',
+      seoDescription: 'Simoo Cafe - Experience the finest coffee and delicious food in Dire Dawa, Ethiopia. Your favorite local cafe for authentic Ethiopian cuisine and premium coffee.',
+      location: 'Dire Dawa',
+      city: 'Dire Dawa',
+      country: 'Ethiopia',
     }
   });
-  console.log('✅ Restaurant settings created');
+  console.log('✅ Restaurant settings created with SEO data');
 
   // Create categories
   const beverages = await prisma.category.upsert({

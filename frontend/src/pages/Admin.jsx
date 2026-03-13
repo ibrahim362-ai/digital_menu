@@ -36,7 +36,12 @@ export default function Admin() {
     logo: '', 
     favicon: '',
     browserTitle: '',
-    primaryColor: '#d97706' 
+    primaryColor: '#d97706',
+    seoKeywords: '',
+    seoDescription: '',
+    location: '',
+    city: '',
+    country: ''
   });
   const [showPassword, setShowPassword] = useState({});
   const [copiedField, setCopiedField] = useState(null);
@@ -425,7 +430,12 @@ export default function Admin() {
         logo: data.logo || '',
         favicon: data.favicon || '',
         browserTitle: data.browserTitle || 'Restaurant Management',
-        primaryColor: data.primaryColor || '#d97706'
+        primaryColor: data.primaryColor || '#d97706',
+        seoKeywords: data.seoKeywords || '',
+        seoDescription: data.seoDescription || '',
+        location: data.location || '',
+        city: data.city || '',
+        country: data.country || ''
       });
     } catch (err) {
       console.error('Failed to fetch restaurant settings', err);
@@ -1387,6 +1397,75 @@ export default function Admin() {
                         </button>
                       </motion.div>
                     )}
+                  </div>
+
+                  {/* SEO Section */}
+                  <div className="col-span-2 border-t border-gray-200 pt-6 mt-4">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      SEO & Location Settings
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">SEO Keywords</label>
+                        <input 
+                          type="text" 
+                          placeholder="Cafe Dire Dawa, ethiopia, simoo cafe, coffee shop" 
+                          value={restaurantForm.seoKeywords} 
+                          onChange={(e) => setRestaurantForm({ ...restaurantForm, seoKeywords: e.target.value })} 
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all" 
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Comma-separated keywords for search engines</p>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">SEO Description</label>
+                        <textarea 
+                          placeholder="Brief description of your restaurant for search engines..." 
+                          value={restaurantForm.seoDescription} 
+                          onChange={(e) => setRestaurantForm({ ...restaurantForm, seoDescription: e.target.value })} 
+                          rows="3"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all resize-none" 
+                        />
+                        <p className="text-xs text-gray-500 mt-1">150-160 characters recommended</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                        <input 
+                          type="text" 
+                          placeholder="Dire Dawa" 
+                          value={restaurantForm.city} 
+                          onChange={(e) => setRestaurantForm({ ...restaurantForm, city: e.target.value })} 
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all" 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                        <input 
+                          type="text" 
+                          placeholder="Ethiopia" 
+                          value={restaurantForm.country} 
+                          onChange={(e) => setRestaurantForm({ ...restaurantForm, country: e.target.value })} 
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all" 
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Address</label>
+                        <input 
+                          type="text" 
+                          placeholder="Street address, Dire Dawa, Ethiopia" 
+                          value={restaurantForm.location} 
+                          onChange={(e) => setRestaurantForm({ ...restaurantForm, location: e.target.value })} 
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all" 
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div>

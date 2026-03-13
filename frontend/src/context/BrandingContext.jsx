@@ -18,7 +18,12 @@ export const BrandingProvider = ({ children }) => {
     logo: '',
     favicon: '',
     browserTitle: 'Restaurant Management',
-    primaryColor: '#d97706'
+    primaryColor: '#d97706',
+    seoKeywords: '',
+    seoDescription: '',
+    location: '',
+    city: '',
+    country: ''
   });
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +39,12 @@ export const BrandingProvider = ({ children }) => {
         logo: data.logo || '',
         favicon: data.favicon || '',
         browserTitle: data.browserTitle || 'Restaurant Management',
-        primaryColor: data.primaryColor || '#d97706'
+        primaryColor: data.primaryColor || '#d97706',
+        seoKeywords: data.seoKeywords || '',
+        seoDescription: data.seoDescription || '',
+        location: data.location || '',
+        city: data.city || '',
+        country: data.country || ''
       };
       setBranding(brandingData);
       applyBranding(brandingData);
