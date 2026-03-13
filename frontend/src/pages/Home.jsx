@@ -893,7 +893,7 @@ export default function Home() {
                 onClick={(e) => e.stopPropagation()}
                 className={`relative max-w-5xl w-full md:my-8 md:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden max-h-[95vh] md:max-h-[90vh] flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'}`}
               >
-                {/* Close Button with Enhanced Animation */}
+                {/* Close Button with Enhanced Animation - Hidden on Mobile */}
                 <motion.button
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ 
@@ -913,9 +913,10 @@ export default function Home() {
                   }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setSelectedProduct(null)}
-                  className={`absolute top-3 md:top-6 ${isRTL ? 'left-3 md:left-6' : 'right-3 md:right-6'} z-20 p-2 md:p-3 rounded-full shadow-2xl backdrop-blur-sm ${darkMode ? 'bg-gray-800/90 text-white hover:bg-gray-700' : 'bg-white/90 text-gray-800 hover:bg-gray-100'} min-w-[44px] min-h-[44px] flex items-center justify-center`}
+                  className={`hidden md:flex absolute top-6 ${isRTL ? 'left-6' : 'right-6'} p-3 rounded-full shadow-2xl backdrop-blur-sm ${darkMode ? 'bg-gray-800/90 text-white hover:bg-gray-700' : 'bg-white/90 text-gray-800 hover:bg-gray-100'} min-w-[44px] min-h-[44px] items-center justify-center`}
+                  style={{ zIndex: 9999 }}
                 >
-                  <X className="w-5 h-5 md:w-6 md:h-6" />
+                  <X className="w-6 h-6" />
                 </motion.button>
 
                 <div className="grid md:grid-cols-2 gap-0 overflow-y-auto">
