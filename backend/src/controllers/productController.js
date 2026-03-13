@@ -1,4 +1,5 @@
 import prisma from '../config/database.js';
+import { generateSlug, generateUniqueSlug } from '../utils/seo.js';
 
 export const getProducts = async (req, res) => {
   try {
@@ -15,9 +16,20 @@ export const getProducts = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const { name, nameOr, nameAm, nameSo, nameAr, description, descriptionOr, descriptionAm, descriptionSo, descriptionAr, price, prepTime, image, categoryId } = req.body;
+    
+    // Generate SEO-friendly slug
+    const baseSlug = generateSlug(name);
+    const slug = await generateUniqueSlug(
+      baseSlug,
+      async (slug, excludeId) => {
+        const existing = await prisma.product.findUnique({ where: { slug } });
+        return existing !== null;
+      }
+    );
+    
     const product = await prisma.product.create({
       data: { 
-        name, nameOr, nameAm, nameSo, nameAr,
+        name, slug, nameOr, nameAm, nameSo, nameAr,
         description, descriptionOr, descriptionAm, descriptionSo, descriptionAr,
         price: parseFloat(price),
         prepTime: prepTime || null,
@@ -35,10 +47,26 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { name, nameOr, nameAm, nameSo, nameAr, description, descriptionOr, descriptionAm, descriptionSo, descriptionAr, price, prepTime, image, categoryId } = req.body;
+    const productId = parseInt(req.params.id);
+    
+    // Generate new slug if name changed
+    let slug;
+    if (name) {
+      const baseSlug = generateSlug(name);
+      slug = await generateUniqueSlug(
+        baseSlug,
+        async (slug, excludeId) => {
+          const existing = await prisma.product.findUnique({ where: { slug } });
+          return existing !== null && existing.id !== excludeId;
+        },
+        productId
+      );
+    }
+    
     const product = await prisma.product.update({
-      where: { id: parseInt(req.params.id) },
+      where: { id: productId },
       data: { 
-        name, nameOr, nameAm, nameSo, nameAr,
+        name, slug, nameOr, nameAm, nameSo, nameAr,
         description, descriptionOr, descriptionAm, descriptionSo, descriptionAr,
         price: parseFloat(price),
         prepTime: prepTime || null,
