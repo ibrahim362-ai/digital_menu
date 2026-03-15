@@ -40,7 +40,4 @@ async function generateUniqueSlug(baseSlug, checkExists, excludeId = null) {
   return slug;
 }
 
-module.exports = {
-  generateSlug,
-  generateUniqueSlug
-};
+export { generateSlug, generateUniqueSlug };
